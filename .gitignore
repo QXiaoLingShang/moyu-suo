@@ -1,6 +1,36 @@
-# 未来静态生成器产物
-node_modules/
+# build output
 dist/
-_site/
+
+# generated types
 .astro/
-public/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# pagefind（构建产物，页面搜索资源）
+public/pagefind
+
+# 旧预留产物目录（生成器定型后不再需要）
+_site/
+
+# Obsidian（vault 在 posts/，编辑器状态不入库）
+.obsidian/
+
+# docs
+docs/**

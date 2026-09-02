@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "./theme.css";
+@import "./typography.css";
+@import "rehype-callouts/theme/obsidian";
+
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@layer base {
+  * {
+    @apply border-border outline-accent/75;
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-muted) transparent;
+  }
+  a,
+  button,
+  #main-content {
+    @apply outline-accent outline-offset-1 focus-visible:no-underline focus-visible:outline-2 focus-visible:outline-dashed;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+}
+
+@utility max-w-app {
+  @apply max-w-3xl;
+}
+
+@utility app-layout {
+  @apply max-w-app mx-auto w-full px-4;
+}
+
+@utility active-nav {
+  @apply underline decoration-wavy decoration-2 underline-offset-8;
+}
+
+:target {
+  scroll-margin-block: 1rem;
+}
+
+/* 防剧透：黑条隐藏，hover 白字揭示 + “你知道得太多了”气泡。写作 <span class="spoiler">内容</span> */
+.spoiler {
+  position: relative;
+  background-color: #000;
+  color: #000; /* 黑字融黑条：平时不可见 */
+  border-radius: 0.2em;
+  padding: 0 0.3em;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s ease;
+}
+
+/* hover：黑条保留，文字变白 reveal */
+.spoiler:hover {
+  color: #fff;
+  user-select: text;
+}
+
+/* 跟随鼠标的 tooltip 元素（JS 注入 body，见 scripts/spoiler-tip.ts） */
+.spoiler-tip {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  background: #18181b;
+  color: #fafafa;
+  font-size: 0.72em;
+  line-height: 1;
+  padding: 0.35em 0.6em;
+  border-radius: 0.3em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.spoiler-tip.visible {
+  opacity: 1;
+}
+
+/* 深色主题：亮底黑字，避免黑对黑 */
+.dark .spoiler-tip {
+  background: #fafafa;
+  color: #18181b;
+}
+
+/* 触屏无 hover：直接展示，免得内容永远看不到 */
+@media (hover: none) {
+  .spoiler {
+    background-color: transparent;
+    color: inherit;
+    user-select: text;
+  }
+}
