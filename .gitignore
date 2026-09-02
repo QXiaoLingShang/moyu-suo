@@ -1,0 +1,6 @@
+# 未来静态生成器产物
+node_modules/
+dist/
+_site/
+.astro/
+public/
