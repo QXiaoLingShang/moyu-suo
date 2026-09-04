@@ -32,7 +32,12 @@ const t = useTranslations(locale);
 
   <Breadcrumb />
 
-  <Main pageTitle={t.pages.searchTitle} pageDesc={t.pages.searchDesc}>
+  <Main
+  pageTitle={t.pages.searchTitle}
+  pageDesc={t.pages.searchDesc}
+  pageTitleKey="pages.searchTitle"
+  pageDescKey="pages.searchDesc"
+>
     <div
       id="pagefind-search"
       transition:persist
@@ -46,6 +51,9 @@ const t = useTranslations(locale);
 </Layout>
 
 <script>
+  import { getInitialLang } from "@/i18n/client";
+  import { pagefindTranslations } from "@/i18n/pagefind";
+
   function initSearch() {
     const pageFindSearch: HTMLElement | null =
       document.querySelector("#pagefind-search");
@@ -79,6 +87,8 @@ const t = useTranslations(locale);
         bundlePath,
         showImages: false,
         showSubResults: true,
+        // 中文 UI：Pagefind 无简体中文内置，用覆盖词典（切换语言后整页重载生效）
+        translations: pagefindTranslations(getInitialLang()),
         processTerm: function (term: string) {
           params.set("q", term); // Update the `q` parameter in the URL
           history.replaceState(history.state, "", "?" + params.toString()); // Push the new URL without reloading

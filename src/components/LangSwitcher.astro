@@ -1,0 +1,40 @@
+---
+import IconWorld from "@/assets/icons/IconWorld.svg";
+---
+
+<!--
+  客户端 UI 语言切换按钮（方案 B）。
+  形态：地球图标 + 正常字号文字（"EN"/"中"），文字为普通文本、不随图标尺寸压缩；
+  排布对齐导航文字项（font-medium，px-2 py-1，hover:text-accent）。
+  初始默认中文 UI（显示可切到的 "EN"）；点击后由 client.ts 整体切换。
+-->
+<button
+  data-lang-btn
+  type="button"
+  class="focus-outline hover:text-accent relative inline-flex size-8 items-center justify-center sm:size-auto sm:gap-1.5 sm:px-1"
+  title="English"
+  aria-label="English"
+>
+  <IconWorld class="size-6 shrink-0" />
+  <span data-lang-label class="hidden sm:inline">EN</span>
+</button>
+
+<script>
+  import { restoreLang, toggleLang } from "@/i18n/client";
+
+  function bind() {
+    const btn = document.querySelector("[data-lang-btn]");
+    if (!btn) return;
+    btn.addEventListener("click", () => toggleLang());
+  }
+
+  // 初始挂载（模块脚本延后执行，DOM 已就绪）
+  restoreLang();
+  bind();
+
+  // Astro View Transitions 换页后 DOM 被替换，需重新复原语言并重绑
+  document.addEventListener("astro:after-swap", () => {
+    restoreLang();
+    bind();
+  });
+</script>

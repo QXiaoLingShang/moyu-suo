@@ -62,7 +62,7 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
     class="flex flex-wrap items-center gap-x-1 font-light [&>li:not(:last-child)>a]:hover:opacity-100"
   >
     <li class="flex items-center gap-x-1">
-      <a href={getRelativeLocaleUrl(locale, "")} class="opacity-80">
+      <a href={getRelativeLocaleUrl(locale, "")} class="opacity-80" data-i18n="nav.home">
         {t.nav.home}
       </a>
       <span aria-hidden="true" class="opacity-80">&raquo;</span>
@@ -74,6 +74,7 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
             <span
               class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
               aria-current="page"
+              data-i18n-phrase
             >
               {/* make the last part lowercase in Home > Tags > some-tag */}
               {navLabels[breadcrumb] ?? decodeSegment(breadcrumb)}
@@ -84,6 +85,7 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
             <a
               href={getRelativeLocaleUrl(locale, breadcrumb)}
               class="capitalize opacity-70"
+              data-i18n-phrase
             >
               {navLabels[breadcrumb] ?? decodeSegment(breadcrumb)}
             </a>

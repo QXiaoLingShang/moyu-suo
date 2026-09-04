@@ -72,7 +72,7 @@ const homePath = getRelativeLocaleUrl(locale, "");
         socials.length > 0 && (
           <div class="mt-4 flex max-sm:flex-col sm:items-center">
             <div class="me-2 mb-1 whitespace-nowrap sm:mb-0">
-              {t.home.socialLinks}:
+              <span data-i18n="home.socialLinks">{t.home.socialLinks}</span>:
             </div>
             <Socials />
           </div>
@@ -89,7 +89,7 @@ const homePath = getRelativeLocaleUrl(locale, "");
             { "border-border border-b": recentPosts.length > 0 },
           ]}
         >
-          <h2 class="text-2xl font-semibold tracking-wide">
+          <h2 class="text-2xl font-semibold tracking-wide" data-i18n="home.featured">
             {t.home.featured}
           </h2>
           <ul>
@@ -104,7 +104,7 @@ const homePath = getRelativeLocaleUrl(locale, "");
     {
       recentPosts.length > 0 && (
         <section id="recent-posts" class="pt-12 pb-6">
-          <h2 class="text-2xl font-semibold tracking-wide">
+          <h2 class="text-2xl font-semibold tracking-wide" data-i18n="home.recentPosts">
             {t.home.recentPosts}
           </h2>
           <ul>
@@ -118,7 +118,7 @@ const homePath = getRelativeLocaleUrl(locale, "");
 
     <div class="my-8 text-center">
       <LinkButton href={getRelativeLocaleUrl(locale, "posts")}>
-        {t.home.allPosts}
+        <span data-i18n="home.allPosts">{t.home.allPosts}</span>
         <IconArrowRight class="inline-block rtl:-rotate-180" />
       </LinkButton>
     </div>

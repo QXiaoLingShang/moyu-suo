@@ -1,13 +1,8 @@
 ---
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 import IconCalendar from "@/assets/icons/IconCalendar.svg";
 import config from "@/config";
 import { useTranslations } from "@/i18n";
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
+import { formatDate } from "@/utils/formatDate";
 
 type Props = {
   class?: string;
@@ -27,13 +22,19 @@ const {
 
 const t = useTranslations(Astro.currentLocale);
 
-const isModified = modDatetime && modDatetime > pubDatetime;
+const effectiveDate = modDatetime
+  ? new Date(modDatetime)
+  : new Date(pubDatetime);
+const pubDate = new Date(pubDatetime);
+const isModified = !Number.isNaN(effectiveDate.getTime()) &&
+  !Number.isNaN(pubDate.getTime()) &&
+  effectiveDate.getTime() > pubDate.getTime();
 
-const datetime = dayjs(isModified ? modDatetime : pubDatetime).tz(
-  postTimezone ?? config.site.timezone
-);
-
-const date = datetime.format("D MMM, YYYY");
+// 用真实时间 + IANA 时区渲染日期；语言走 Astro i18n 当前 locale
+// （data-i18n-date 供客户端切换语言时按同一规则重算）
+const tz = postTimezone ?? config.site.timezone;
+const lang = (Astro.currentLocale ?? config.site.lang) === "en" ? "en" : "zh-CN";
+const dateText = formatDate(effectiveDate, tz, lang);
 ---
 
 <div
@@ -48,14 +49,16 @@ const date = datetime.format("D MMM, YYYY");
   {
     isModified && (
       <span class:list={["text-sm", { "sm:text-base": size === "lg" }]}>
-        {t.post.updatedAt}:
+        <span data-i18n="post.updatedAt">{t.post.updatedAt}</span>:
       </span>
     )
   }
   <time
     class:list={["text-sm", { "sm:text-base": size === "lg" }]}
-    datetime={datetime.toISOString()}
+    datetime={effectiveDate.toISOString()}
+    data-i18n-date
+    data-tz={tz}
   >
-    {date}
+    {dateText}
   </time>
 </div>
