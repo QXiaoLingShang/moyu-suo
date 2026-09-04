@@ -98,7 +98,7 @@
     }
 
     details:not(.callout) {
-      @apply text-foreground inline-block cursor-pointer select-none [&_p]:hidden [&_ul]:my-0!;
+      @apply text-foreground inline-block cursor-pointer select-none [&_ul]:my-0!;
     }
 
     summary {
