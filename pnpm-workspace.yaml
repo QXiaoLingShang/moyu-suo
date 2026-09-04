@@ -1,0 +1,4 @@
+# pnpm 11 构建脚本审批（pnpm 10+ 默认拦截所有依赖 build 脚本）
+# allowBuilds: true = 放行该包构建脚本；false/缺省 = 拦截
+allowBuilds:
+  esbuild: true
