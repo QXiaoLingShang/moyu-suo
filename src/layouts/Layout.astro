@@ -5,6 +5,7 @@ import { resolveDefaultOgImagePath } from "@/utils/resolveDefaultOgImagePath";
 import { getAssetPath } from "@/utils/withBase";
 import config from "@/config";
 import "@/styles/global.css";
+import "katex/dist/katex.min.css";
 
 type Props = {
   title?: string;
@@ -122,6 +123,7 @@ const rssHref = getAssetPath("rss.xml");
     <script>
       import "@/scripts/theme";
       import "@/scripts/spoiler-tip";
+      import "@/scripts/mermaid";
     </script>
   </body>
 </html>
