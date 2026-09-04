@@ -10,6 +10,8 @@ type Props = {
   pubDatetime: string | Date;
   timezone?: string;
   modDatetime?: string | Date | null;
+  /** 文章由 AI 生成/协助：在日期后追加极简 AI 徽标 */
+  aiGenerated?: boolean;
 };
 
 const {
@@ -18,6 +20,7 @@ const {
   size = "sm",
   class: className = "",
   timezone: postTimezone,
+  aiGenerated = false,
 } = Astro.props;
 
 const t = useTranslations(Astro.currentLocale);
@@ -61,4 +64,15 @@ const dateText = formatDate(effectiveDate, tz, lang);
   >
     {dateText}
   </time>
+  {
+    aiGenerated && (
+      <span
+        class="bg-accent/10 text-accent rounded-full px-2 py-0.5 text-xs font-semibold"
+        title={t.post.aiBadge}
+        data-i18n-title="post.aiBadge"
+      >
+        AI
+      </span>
+    )
+  }
 </div>

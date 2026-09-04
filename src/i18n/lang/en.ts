@@ -21,6 +21,7 @@ export default {
     editPage: "Edit page",
     previousPost: "Previous Post",
     nextPost: "Next Post",
+    aiBadge: "AI generated",
   },
   pagination: {
     prev: "Prev",

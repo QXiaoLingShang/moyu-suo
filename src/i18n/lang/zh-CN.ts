@@ -21,6 +21,7 @@ export default {
     editPage: "编辑页面",
     previousPost: "上一篇",
     nextPost: "下一篇",
+    aiBadge: "AI 生成",
   },
   pagination: {
     prev: "上一页",

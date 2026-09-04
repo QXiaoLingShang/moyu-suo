@@ -16,6 +16,8 @@ const posts = defineCollection({
       title: z.string(),
       featured: z.boolean().optional(),
       draft: z.boolean().optional(),
+      // 标识本文是否由 AI 协助/生成（用于时间旁展示 AI 徽标）
+      aiGenerated: z.boolean().optional(),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),
       description: z.string(),
