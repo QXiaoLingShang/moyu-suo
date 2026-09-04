@@ -32,5 +32,10 @@ _site/
 # Obsidian（vault 在 posts/，编辑器状态不入库）
 .obsidian/
 
+# pi agent 项目配置（个人本地用，不入库）
+.pi/
+
 # docs
 docs/**
+# 临时复现/实验环境（不入库）
+tmp/
