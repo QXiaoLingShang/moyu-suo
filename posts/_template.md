@@ -8,6 +8,7 @@ title: "文章标题：一句话说清这篇讲什么"
 pubDatetime: 2026-09-03T00:00:00.000Z   # 改成今天！ISO 格式；填未来时间 = 定时发布
 description: 列表页小卡片上的一句话简介，勾人一点
 draft: true                              # 写作中保留；发布时删掉这行
+excludeFromRss: false                    # true = 正常发布但不收录进 RSS
 tags: ["标签1", "标签2"]                  # 可选；不填默认 others
 # status: 草稿                           # 可选：草稿/待核实/可发布，给人看的，不影响发布
 ---

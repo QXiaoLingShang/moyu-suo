@@ -24,6 +24,7 @@ blog 文章一律以 `.md` 存放于此，一篇一个文件。本目录在仓�
 | `description` | 必填，列表页/摘要用 |
 | `pubDatetime` | 必填，ISO 格式；**未来时间 = 定时发布**（届时才上架） |
 | `draft` | 草稿置 `true` → 构建与 dev 都隐藏；发布删除 |
+| `excludeFromRss` | 置 `true` → 文章仍正常发布，但不收录进 RSS |
 | `tags` | 可选，数组 |
 | `status` | 非必填，给人看的状态（草稿/待核实/可发布），生成器透传不报错 |
 
@@ -35,6 +36,7 @@ title: 文章标题
 pubDatetime: 2026-09-03T00:00:00.000Z
 description: 一句话摘要
 draft: true
+excludeFromRss: true
 tags: ["AI"]
 ---
 ```

@@ -18,6 +18,8 @@ const posts = defineCollection({
       draft: z.boolean().optional(),
       // 标识本文是否由 AI 协助/生成（用于时间旁展示 AI 徽标）
       aiGenerated: z.boolean().optional(),
+      // 标识本文是否从 RSS 中排除，但仍正常发布到网站
+      excludeFromRss: z.boolean().optional(),
       tags: z.array(z.string()).default(["others"]),
       ogImage: image().or(z.string()).optional(),
       description: z.string(),
