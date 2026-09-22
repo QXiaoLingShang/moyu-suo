@@ -1,9 +1,9 @@
 ---
 title: Codefoces Round 1122 div3 复盘
-pubDatetime: 2026-09-22T21:00:00
+pubDatetime: 2026-09-22T21:00:00+08:00
 description: 赛时5题，简要分析了ABCDEF六题得思路
 draft: false
-ExcludeFromRss: true
+excludeFromRss: true
 tags:
   - OI日记
   - CodeFoces
@@ -489,5 +489,3 @@ cout << left << "\n";
 > [!Todo]
 > 不想看，感觉目前看完全就是越级
 > 以后有时间再看吧
-
-
