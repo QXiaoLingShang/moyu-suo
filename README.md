@@ -1,33 +1,79 @@
-# 小铃殇的摸鱼所
+<h1 align="center">小铃殇的摸鱼所</h1>
 
-个人中文博客：Markdown 写作 + **Astro 静态生成**（AstroPaper 主题），部署于 GitHub Pages。
+<p align="center">
+  个人技术博客，记录算法学习、Web 开发、AI 工具与日常思考。
+</p>
 
-在线地址：<https://QXiaoLingShang.github.io/moyu-suo/>
+<p align="center">
+  <a href="https://github.com/satnaing/astro-paper">
+    <img alt="样式：AstroPaper" src="https://img.shields.io/badge/%E6%A0%B7%E5%BC%8F-AstroPaper-BC52EE?style=flat-square&logo=astro&logoColor=white" />
+  </a>
+  <a href="https://github.com/QXiaoLingShang/moyu-suo/actions/workflows/deploy.yml">
+    <img alt="GitHub Pages 部署" src="https://github.com/QXiaoLingShang/moyu-suo/actions/workflows/deploy.yml/badge.svg?branch=main" />
+  </a>
+  <img alt="Astro 7" src="https://img.shields.io/badge/Astro-7-BC52EE?style=flat-square&logo=astro&logoColor=white" />
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+</p>
 
-## 目录结构
+## 关于本站
 
-| 目录/文件 | 用途 |
-|---|---|
-| `posts/` | 文章源 `.md`（框架无关，内容归自己）。`_` 开头的文件不参与发布（`_template.md` = 新文章模板、`_README.md` = 写作约定） |
-| `src/` `public/` | AstroPaper 主题与站点源码（写文章不用碰） |
-| `astro-paper.config.ts` | 站点配置：标题 / 作者 / 社交链接 |
-| `.github/workflows/deploy.yml` | push main 自动构建并部署 GitHub Pages |
+「小铃殇的摸鱼所」是我持续更新的个人博客。这个仓库保存博客文章和站点实现；文章由我撰写，主要记录算法与 OI、前端和 Astro 实践、AI 相关学习，以及写作和工具使用中的经验。
 
-## 写一篇文章
+**在线阅读：**[QXiaoLingShang.github.io/moyu-suo](https://QXiaoLingShang.github.io/moyu-suo/)
 
-1. 复制 `posts/_template.md` → 改名（可放 `posts/<分类>/` 子目录，目录名会进 URL）
-2. 填 frontmatter：`title` / `description` / `pubDatetime`（ISO 时间，记得带时区或 Z）
-3. `draft: true` 期间不会发布（dev 也不显示）；写完删掉该行即发布
-4. 图片用相对路径随文走（如 `![](assets/x.png)`），构建时自动优化
+## 阅读体验
 
-## 本地命令
+- 中英文界面，支持浅色与深色主题
+- 按分类、标签和日期浏览文章，也可以全文搜索
+- 支持 Markdown、代码高亮、KaTeX 数学公式、Mermaid 图表和提示块
+- 文章图片可放大查看；支持 RSS 订阅
+- 静态生成并部署到 GitHub Pages
+
+## 技术栈
+
+| 用途 | 技术 |
+| --- | --- |
+| 站点生成 | [Astro](https://astro.build/) |
+| 样式 | [Tailwind CSS](https://tailwindcss.com/) |
+| 文章格式 | Markdown / MDX |
+| 站内搜索 | [Pagefind](https://pagefind.app/) |
+| 部署 | GitHub Actions + GitHub Pages |
+
+## 本地预览
+
+需要 Node.js 22.12 或更新版本，以及 pnpm。
 
 ```bash
-npm install     # 首次
-npm run dev     # 开发预览 http://localhost:4321/moyu-suo/
-npm run build   # 构建 + 搜索索引（产物 dist/）
+git clone https://github.com/QXiaoLingShang/moyu-suo.git
+cd moyu-suo
+pnpm install
+pnpm dev
 ```
+
+开发服务器启动后，打开终端显示的本地地址即可预览。
+
+```bash
+pnpm build    # 类型检查、生成静态页面和 Pagefind 搜索索引
+pnpm preview  # 本地预览构建结果
+```
+
+## 写作与发布
+
+文章以 Markdown 文件保存在 [`posts/`](posts/) 中。新文章可以从 [`posts/_template.md`](posts/_template.md) 开始；目录分类和 front matter 约定见 [`posts/_README.md`](posts/_README.md)。
+
+推送到 `main` 后，GitHub Actions 会构建站点并发布到 GitHub Pages。
+
+## 仓库结构
+
+| 路径 | 内容 |
+| --- | --- |
+| [`posts/`](posts/) | 博客文章、文章插图和写作模板 |
+| [`src/`](src/) | 页面、组件、样式和站点功能 |
+| [`public/`](public/) | favicon、默认社交分享图等静态资源 |
+| [`astro-paper.config.ts`](astro-paper.config.ts) | 站点标题、作者、语言和功能配置 |
+| [`astro.config.ts`](astro.config.ts) | Astro 构建、Markdown 处理和部署路径配置 |
+| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | GitHub Pages 自动部署流程 |
 
 ## 致谢
 
-主题基于 [AstroPaper](https://github.com/satnaing/astro-paper)（MIT），站点样式与防剧透等功能为本站定制。
+本站使用 [AstroPaper](https://github.com/satnaing/astro-paper) 作为主题基础。感谢 [Sat Naing](https://github.com/satnaing) 开源这个主题；主题代码遵循仓库中的 MIT License。
