@@ -1,8 +1,12 @@
 ---
 import type { CollectionEntry } from "astro:content";
+import config from "@/config";
 import { getPostUrl } from "@/utils/getPostPaths";
+import { slugifyStr } from "@/utils/slugify";
 import { toTransitionName } from "@/utils/toTransitionName";
+import { useTranslations } from "@/i18n";
 import Datetime from "./Datetime.astro";
+import Tag from "./Tag.astro";
 
 type Props = {
   variant?: "h2" | "h3";
@@ -10,7 +14,8 @@ type Props = {
 
 const { variant: Heading = "h2", id, data, filePath } = Astro.props;
 
-const { title, description, ...props } = data;
+const { title, description, tags, ...props } = data;
+const t = useTranslations(Astro.currentLocale ?? config.site.lang);
 ---
 
 <li class="my-6">
@@ -26,6 +31,25 @@ const { title, description, ...props } = data;
       {title}
     </Heading>
   </a>
-  <Datetime {...props} />
+  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+    <Datetime {...props} />
+    {
+      tags.length > 0 && (
+        <ul
+          class="flex flex-wrap items-center gap-x-3 gap-y-1.5"
+          aria-label={t.post.tagLabel}
+        >
+          {tags.map(tag => (
+            <Tag
+              tag={slugifyStr(tag)}
+              tagName={tag}
+              size="sm"
+              transition={false}
+            />
+          ))}
+        </ul>
+      )
+    }
+  </div>
   <p>{description}</p>
 </li>
