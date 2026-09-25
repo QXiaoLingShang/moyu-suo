@@ -57,11 +57,11 @@ const isActive = (path: string) => {
     </a>
     <nav
       id="nav-menu"
-      class="flex w-full flex-col items-center sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
+      class="relative z-50 flex w-full flex-col items-center sm:static sm:z-auto sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
     >
       <button
         id="menu-btn"
-        class="focus-outline self-end p-2 sm:hidden"
+        class="focus-outline relative z-[60] self-end p-2 sm:hidden"
         aria-label={t.a11y.openMenu}
         aria-expanded="false"
         aria-controls="menu-items"
@@ -73,9 +73,20 @@ const isActive = (path: string) => {
       </button>
       <ul
         id="menu-items"
-        class="[&>li>a]:hover:text-accent mt-4 hidden w-44 grid-cols-6 place-content-center gap-2 sm:mt-0 sm:flex sm:w-auto sm:gap-x-5 sm:gap-y-0 sm:[&>li]:h-8 [&>li>a]:block [&>li>a]:px-4 [&>li>a]:py-3 [&>li>a]:text-center [&>li>a]:font-medium sm:[&>li>a]:px-2 sm:[&>li>a]:py-1"
+        aria-hidden="true"
+        inert
+        class:list={[
+          "border-border bg-background [&>li>a]:hover:text-accent [&>li>a]:border-border",
+          "pointer-events-none fixed inset-x-0 top-[4.5rem] bottom-0 z-50 grid w-full grid-cols-6 content-start gap-x-2 gap-y-0 overflow-y-auto overscroll-contain px-8 pt-6 pb-24",
+          "translate-y-2 opacity-0 transition-[opacity,transform] duration-250 motion-reduce:transition-none",
+          "sm:pointer-events-auto sm:static sm:inset-auto sm:mt-0 sm:flex sm:h-auto sm:w-auto sm:translate-y-0 sm:grid-cols-6 sm:content-normal sm:gap-x-5 sm:gap-y-0 sm:overflow-visible sm:overscroll-auto sm:border-0 sm:bg-transparent sm:p-0 sm:opacity-100 sm:transition-none sm:[&>li]:h-8",
+          "[&>li>a]:block [&>li>a]:border-b [&>li>a]:px-0 [&>li>a]:py-3 [&>li>a]:text-start [&>li>a]:text-sm [&>li>a]:leading-6 [&>li>a]:font-medium",
+          "sm:[&>li>a]:border-0 sm:[&>li>a]:px-2 sm:[&>li>a]:py-1 sm:[&>li>a]:text-center sm:[&>li>a]:text-base sm:[&>li>a]:leading-normal",
+        ]}
       >
-        <li class="col-span-6">
+        <li
+          class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
+        >
           <a
             href={getRelativeLocaleUrl(locale, "posts")}
             class:list={{ "active-nav": isActive("/posts") }}
@@ -84,7 +95,9 @@ const isActive = (path: string) => {
             {t.nav.posts}
           </a>
         </li>
-        <li class="col-span-6">
+        <li
+          class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
+        >
           <a
             href={getRelativeLocaleUrl(locale, "tags")}
             class:list={{ "active-nav": isActive("/tags") }}
@@ -93,7 +106,9 @@ const isActive = (path: string) => {
             {t.nav.tags}
           </a>
         </li>
-        <li class="col-span-6">
+        <li
+          class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
+        >
           <a
             href={getRelativeLocaleUrl(locale, "about")}
             class:list={{ "active-nav": isActive("/about") }}
@@ -104,11 +119,11 @@ const isActive = (path: string) => {
         </li>
         {
           features.showArchives && (
-            <li class="col-span-6">
+            <li class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none">
               <LinkButton
                 href={getRelativeLocaleUrl(locale, "archives")}
                 class:list={[
-                  "focus-outline flex size-full justify-center p-3 sm:relative sm:size-8 sm:p-0",
+                  "focus-outline flex size-full justify-start py-3 sm:relative sm:size-8 sm:justify-center sm:p-0",
                   { "active-nav": isActive("/archives") },
                 ]}
                 title={t.nav.archives}
@@ -116,7 +131,9 @@ const isActive = (path: string) => {
                 data-i18n-title="nav.archives"
               >
                 <IconArchive class="hidden sm:absolute sm:top-1/2 sm:left-1/2 sm:block sm:size-6 sm:-translate-x-1/2 sm:-translate-y-1/2" />
-                <span class="sm:sr-only" data-i18n="nav.archives">{t.nav.archives}</span>
+                <span class="sm:sr-only" data-i18n="nav.archives">
+                  {t.nav.archives}
+                </span>
                 {isActive("/archives") && (
                   <IconUnderline
                     aria-hidden="true"
@@ -129,7 +146,7 @@ const isActive = (path: string) => {
         }
         {
           features.search !== false && (
-            <li class="col-span-2 flex items-center justify-center">
+            <li class="col-span-2 mt-6 flex items-center justify-center sm:mt-0">
               <LinkButton
                 href={getRelativeLocaleUrl(locale, "search")}
                 class:list={["focus-outline relative size-8"]}
@@ -138,7 +155,9 @@ const isActive = (path: string) => {
                 data-i18n-title="nav.search"
               >
                 <IconSearch class="absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2" />
-                <span class="sr-only" data-i18n="nav.search">{t.nav.search}</span>
+                <span class="sr-only" data-i18n="nav.search">
+                  {t.nav.search}
+                </span>
                 {isActive("/search") && (
                   <IconUnderline
                     aria-hidden="true"
@@ -151,7 +170,7 @@ const isActive = (path: string) => {
         }
         {
           features.lightAndDarkMode && (
-            <li class="col-span-2 flex items-center justify-center">
+            <li class="col-span-2 mt-6 flex items-center justify-center sm:mt-0">
               <button
                 id="theme-btn"
                 class="focus-outline hover:[&>svg]:stroke-accent relative size-12 p-4 sm:size-8"
@@ -165,7 +184,7 @@ const isActive = (path: string) => {
             </li>
           )
         }
-        <li class="col-span-2 flex items-center justify-center">
+        <li class="col-span-2 mt-6 flex items-center justify-center sm:mt-0">
           <LangSwitcher />
         </li>
       </ul>
@@ -176,7 +195,7 @@ const isActive = (path: string) => {
 <script>
   function toggleNav() {
     const menuBtn = document.querySelector<HTMLButtonElement>("#menu-btn");
-    const menuItems = document.querySelector("#menu-items");
+    const menuItems = document.querySelector<HTMLUListElement>("#menu-items");
     const menuIcon = document.querySelector("#menu-icon");
     const closeIcon = document.querySelector("#close-icon");
 
@@ -184,18 +203,143 @@ const isActive = (path: string) => {
 
     const openLabel = menuBtn.dataset.labelOpen ?? "Open menu";
     const closeLabel = menuBtn.dataset.labelClose ?? "Close menu";
+    const desktopQuery = window.matchMedia("(min-width: 40rem)");
+    let isOpen = false;
+    let isScrollLocked = false;
+    let previousRootOverflowY = "";
+    let previousBodyOverflow = "";
+    let closeTimer: number | undefined;
+    let transitionId = 0;
 
-    menuBtn.addEventListener("click", () => {
-      const openMenu = menuBtn.getAttribute("aria-expanded") === "true";
+    function lockPageScroll() {
+      if (!isScrollLocked) {
+        previousRootOverflowY = document.documentElement.style.overflowY;
+        previousBodyOverflow = document.body.style.overflow;
+        isScrollLocked = true;
+      }
+      document.documentElement.style.overflowY = "hidden";
+      document.body.style.overflow = "hidden";
+    }
 
-      menuBtn.setAttribute("aria-expanded", openMenu ? "false" : "true");
-      menuBtn.setAttribute("aria-label", openMenu ? openLabel : closeLabel);
+    function unlockPageScroll() {
+      if (!isScrollLocked) return;
+      document.documentElement.style.overflowY = previousRootOverflowY;
+      document.body.style.overflow = previousBodyOverflow;
+      isScrollLocked = false;
+    }
 
-      menuItems.classList.toggle("hidden");
-      menuItems.classList.toggle("grid");
-      menuIcon.classList.toggle("hidden");
-      closeIcon.classList.toggle("hidden");
+    function finishClosing(expectedTransitionId: number) {
+      if (isOpen || expectedTransitionId !== transitionId) return;
+      unlockPageScroll();
+      closeTimer = undefined;
+    }
+
+    function setMenuOpen(
+      open: boolean,
+      restoreFocus = true,
+      immediate = false
+    ) {
+      if (open && desktopQuery.matches) return;
+      if (open === isOpen && !(immediate && isScrollLocked)) return;
+
+      isOpen = open;
+      menuBtn.setAttribute("aria-expanded", String(open));
+      menuBtn.setAttribute("aria-label", open ? closeLabel : openLabel);
+      menuIcon.classList.toggle("hidden", open);
+      closeIcon.classList.toggle("hidden", !open);
+
+      if (open) {
+        if (closeTimer !== undefined) {
+          window.clearTimeout(closeTimer);
+          closeTimer = undefined;
+        }
+        transitionId += 1;
+        lockPageScroll();
+        menuItems.inert = false;
+        menuItems.setAttribute("aria-hidden", "false");
+        menuItems.classList.remove(
+          "opacity-0",
+          "translate-y-2",
+          "pointer-events-none"
+        );
+        menuItems.classList.add(
+          "opacity-100",
+          "translate-y-0",
+          "pointer-events-auto"
+        );
+        menuItems
+          .querySelector<HTMLElement>("a[href], button:not(:disabled)")
+          ?.focus();
+        return;
+      }
+
+      menuItems.inert = true;
+      menuItems.setAttribute("aria-hidden", "true");
+      menuItems.classList.remove(
+        "opacity-100",
+        "translate-y-0",
+        "pointer-events-auto"
+      );
+      menuItems.classList.add(
+        "opacity-0",
+        "translate-y-2",
+        "pointer-events-none"
+      );
+      if (restoreFocus && menuBtn.isConnected) menuBtn.focus();
+
+      if (closeTimer !== undefined) window.clearTimeout(closeTimer);
+      const closingTransitionId = ++transitionId;
+      if (
+        immediate ||
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      ) {
+        finishClosing(closingTransitionId);
+      } else {
+        closeTimer = window.setTimeout(
+          () => finishClosing(closingTransitionId),
+          350
+        );
+      }
+    }
+
+    function syncBreakpoint() {
+      if (desktopQuery.matches) {
+        if (isOpen || isScrollLocked) setMenuOpen(false, false, true);
+        menuItems.inert = false;
+        menuItems.setAttribute("aria-hidden", "false");
+      } else {
+        menuItems.inert = !isOpen;
+        menuItems.setAttribute("aria-hidden", String(!isOpen));
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!isOpen) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setMenuOpen(false);
+      }
+    }
+
+    menuBtn.addEventListener("click", () => setMenuOpen(!isOpen));
+    menuItems.addEventListener("click", event => {
+      if (event.target instanceof Element && event.target.closest("a[href]")) {
+        setMenuOpen(false, false);
+      }
     });
+
+    function cleanupBeforeSwap() {
+      if (isOpen || isScrollLocked) setMenuOpen(false, false, true);
+      document.removeEventListener("keydown", handleKeyDown);
+      desktopQuery.removeEventListener("change", syncBreakpoint);
+    }
+
+    syncBreakpoint();
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("astro:before-swap", cleanupBeforeSwap, {
+      once: true,
+    });
+    desktopQuery.addEventListener("change", syncBreakpoint);
   }
 
   function handleSkipToContent() {
