@@ -14,6 +14,7 @@ import remarkMath from "remark-math";
 import remarkGemoji from "remark-gemoji";
 import rehypeCallouts from "rehype-callouts";
 import rehypeKatex from "rehype-katex";
+import remarkDisplayMath from "./src/utils/remarkDisplayMath";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
@@ -50,6 +51,7 @@ export default defineConfig({
       remarkPlugins: [
         remarkGemoji,
         remarkMath,
+        remarkDisplayMath,
         remarkToc,
         [remarkCollapse, { test: "Table of contents" }],
       ],

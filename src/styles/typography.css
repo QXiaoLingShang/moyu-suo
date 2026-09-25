@@ -27,6 +27,10 @@
       @apply text-foreground;
     }
 
+    .katex-display {
+      @apply text-foreground;
+    }
+
     a {
       @apply text-foreground hover:text-accent wrap-break-word decoration-dashed underline-offset-4 focus-visible:no-underline;
     }
