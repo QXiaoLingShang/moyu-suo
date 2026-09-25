@@ -273,6 +273,28 @@ const ogImage = ogImageUrl
 
     let overlay = null;
     let lastFocused = null;
+    let scrollLockCount = 0;
+    let previousRootOverflowY = "";
+    let previousBodyOverflow = "";
+
+    function lockPageScroll() {
+      if (scrollLockCount === 0) {
+        previousRootOverflowY = document.documentElement.style.overflowY;
+        previousBodyOverflow = document.body.style.overflow;
+      }
+      scrollLockCount += 1;
+      // The page scrollbar belongs to <html>, so body overflow alone leaves
+      // the native scrollbar visible outside the fixed lightbox overlay.
+      document.documentElement.style.overflowY = "hidden";
+      document.body.style.overflow = "hidden";
+    }
+
+    function unlockPageScroll() {
+      scrollLockCount = Math.max(0, scrollLockCount - 1);
+      if (scrollLockCount > 0) return;
+      document.documentElement.style.overflowY = previousRootOverflowY;
+      document.body.style.overflow = previousBodyOverflow;
+    }
 
     // Defer attribute mutations so they don't push the LCP timestamp.
     // Event listeners below use delegation and don't need the attributes to exist yet.
@@ -440,7 +462,7 @@ const ogImage = ogImageUrl
       });
 
       document.body.appendChild(overlay);
-      document.body.style.overflow = "hidden";
+      lockPageScroll();
       document.addEventListener("keydown", onKeyDown);
       window.__closeLightbox = close;
 
@@ -455,15 +477,27 @@ const ogImage = ogImageUrl
       window.__closeLightbox = null;
 
       document.removeEventListener("keydown", onKeyDown);
-      document.body.style.overflow = "";
       lastFocused?.focus();
       lastFocused = null;
 
+      const restoreScrollLock = () => {
+        // Keep the viewport locked through the fade-out, so the native
+        // scrollbar does not reappear beside a still-visible overlay.
+        unlockPageScroll();
+      };
+
       if (prefersReducedMotion()) {
         el.remove();
+        restoreScrollLock();
         return;
       }
-      const remove = () => el.remove();
+      let removed = false;
+      const remove = () => {
+        if (removed) return;
+        removed = true;
+        el.remove();
+        restoreScrollLock();
+      };
       el.addEventListener("transitionend", remove, { once: true });
       setTimeout(remove, 250); // fallback in case transitionend never fires
       el.classList.remove("opacity-100");
