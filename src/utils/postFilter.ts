@@ -1,16 +1,35 @@
 import type { CollectionEntry } from "astro:content";
 import config from "@/config";
+import { slugifyStr } from "./slugify";
+
+export type PostFilterOptions = {
+  /** Include posts tagged `test` in this selection. */
+  includeTestPosts?: boolean;
+};
+
+export function isTestPost(post: CollectionEntry<"posts">) {
+  return post.data.tags.some(tag => slugifyStr(tag) === "test");
+}
 
 /**
- * Determines whether a post is eligible to be listed/rendered.
+ * Determines whether a post is eligible for a public listing.
  *
  * - Excludes drafts always
+ * - Excludes `test` posts unless a test-aware route explicitly opts in
  * - In production, excludes scheduled posts until `pubDatetime` minus the configured margin
- * - In dev, always shows non-draft posts to make authoring easier
+ * - In dev, eligible non-draft posts bypass the scheduled-date check
  */
-export function postFilter({ data }: CollectionEntry<"posts">) {
+export function postFilter(
+  post: CollectionEntry<"posts">,
+  { includeTestPosts = false }: PostFilterOptions = {}
+) {
+  const { data } = post;
   const isPublishTimePassed =
     Date.now() >
     new Date(data.pubDatetime).getTime() - config.posts.scheduledPostMargin;
-  return !data.draft && (import.meta.env.DEV || isPublishTimePassed);
+  return (
+    !data.draft &&
+    (includeTestPosts || !isTestPost(post)) &&
+    (import.meta.env.DEV || isPublishTimePassed)
+  );
 }
