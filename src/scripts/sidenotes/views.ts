@@ -1,6 +1,7 @@
-import { getSidenoteChoices } from "@/utils/sidenoteLayout";
+import { getSidenoteChoices } from "@/utils/sidenoteSelection";
 import {
   noteLabel,
+  referenceKey,
   type Note,
   type NoteGroup,
   type NoteReference,
@@ -39,7 +40,13 @@ export function createPreviewViews(
   first: NoteReference,
   english: boolean
 ) {
-  const views = new Map<string, NoteView>();
+  const views = new Map<HTMLElement, NoteView>();
+  const firstReferenceByNote = new WeakMap<
+    NoteGroup,
+    Map<Note, NoteReference>
+  >();
+  const configuredGroup = new WeakMap<NoteView, NoteGroup>();
+  const optionButtons = new WeakMap<NoteView, HTMLButtonElement[]>();
   const byCard = new WeakMap<HTMLElement, NoteView>();
   const byOption = new WeakMap<HTMLButtonElement, NoteReference>();
   const renderedChoices = new WeakMap<NoteView, readonly Note[]>();
@@ -110,13 +117,18 @@ export function createPreviewViews(
   const dock = create(first, true);
 
   function forGroup(group: NoteGroup, reference = group.current): NoteView {
-    const firstReference = group.references.find(
-      item => item.note === reference.note
-    );
+    let references = firstReferenceByNote.get(group);
+    if (!references) {
+      references = new Map();
+      for (const item of group.references)
+        if (!references.has(item.note)) references.set(item.note, item);
+      firstReferenceByNote.set(group, references);
+    }
+    const firstReference = references.get(reference.note);
     if (!firstReference)
       throw new Error("A preview reference must belong to its group");
     // Key by the group's first occurrence so selecting a repeated citation reuses its card.
-    const key = `${reference.note.source.id}:${firstReference.ref?.id ?? "orphan"}`;
+    const key = referenceKey(firstReference);
     let view = views.get(key);
     if (!view) {
       view = create(reference);
@@ -127,6 +139,8 @@ export function createPreviewViews(
 
   function configure(group: NoteGroup, view: NoteView): void {
     const reference = group.current;
+    if (configuredGroup.get(view) === group && view.reference === reference)
+      return;
     if (
       view.reference.note !== reference.note ||
       view.reference.ref !== reference.ref
@@ -142,33 +156,32 @@ export function createPreviewViews(
       previous?.length === choices.length &&
       choices.every((item, index) => item.note === previous[index]);
     if (!unchanged) {
-      view.switcher.replaceChildren(
-        ...choices.map(item => {
-          const button = document.createElement("button");
-          button.type = "button";
-          button.className = "sidenote-option";
-          button.textContent = String(item.note.number).padStart(2, "0");
-          button.setAttribute(
-            "aria-label",
-            `${english ? "Preview note" : "预览注解"} ${item.note.number}`
-          );
-          return button;
-        })
-      );
+      const buttons = choices.map(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "sidenote-option";
+        button.textContent = String(item.note.number).padStart(2, "0");
+        button.setAttribute(
+          "aria-label",
+          `${english ? "Preview note" : "预览注解"} ${item.note.number}`
+        );
+        return button;
+      });
+      view.switcher.replaceChildren(...buttons);
+      optionButtons.set(view, buttons);
       renderedChoices.set(
         view,
         choices.map(item => item.note)
       );
     }
-    Array.from(
-      view.switcher.querySelectorAll<HTMLButtonElement>("button")
-    ).forEach((button, index) => {
+    optionButtons.get(view)?.forEach((button, index) => {
       // A reused button must still return to the newly selected occurrence of this note.
       byOption.set(button, choices[index]);
       const pressed = String(choices[index].note === reference.note);
       if (button.getAttribute("aria-pressed") !== pressed)
         button.setAttribute("aria-pressed", pressed);
     });
+    configuredGroup.set(view, group);
   }
 
   function prune(live: ReadonlySet<NoteView>): void {

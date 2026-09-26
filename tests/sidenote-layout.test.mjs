@@ -3,8 +3,8 @@ import test from "node:test";
 import {
   getSidenoteChoices,
   selectSidenoteFocus,
-  calculateSidenoteLayout,
-} from "../src/utils/sidenoteLayout.ts";
+} from "../src/utils/sidenoteSelection.ts";
+import { calculateSidenoteLayout } from "../src/utils/sidenoteLayout.ts";
 
 test("nearby repeated references share one choice and remember the exact active reference", () => {
   const first = { note: "A", ref: "a-1" };
@@ -30,67 +30,90 @@ test("repeated references in different groups retain both positions and all inte
   );
 });
 
-test("reading selection survives a closer middle node until its whole block exits", () => {
+test("reading selection advances at the divider and follows reverse crossings", () => {
   const groups = [
-    { anchor: 100, start: 80, end: 180 },
-    { anchor: 420, start: 400, end: 460 },
-    { anchor: 700, start: 680, end: 740 },
+    { anchor: 100, top: 80, height: 100, start: 80, end: 180 },
+    { anchor: 420, top: 400, height: 60, start: 400, end: 460 },
+    { anchor: 700, top: 680, height: 60, start: 680, end: 740 },
   ];
-  assert.equal(
+  assert.deepEqual(
     selectSidenoteFocus(groups, {
       selectedIndex: 0,
-      viewportStart: 150,
-      viewportEnd: 850,
-    }),
-    0
-  );
-  assert.equal(
-    selectSidenoteFocus(groups, {
-      selectedIndex: 0,
-      viewportStart: 180,
-      viewportEnd: 880,
-    }),
-    1
-  );
-  assert.equal(
-    selectSidenoteFocus(groups, {
-      selectedIndex: -1,
       viewportStart: 0,
       viewportEnd: 900,
+      manualSelection: false,
+      readingLine: 300,
+      previousReadingLine: 200,
+      direction: "down",
     }),
-    1
+    { index: 0, manual: false }
   );
-  assert.equal(
+  assert.deepEqual(
+    selectSidenoteFocus(groups, {
+      selectedIndex: 0,
+      viewportStart: 0,
+      viewportEnd: 900,
+      manualSelection: false,
+      readingLine: 450,
+      previousReadingLine: 300,
+      direction: "down",
+    }),
+    { index: 1, manual: false }
+  );
+  assert.deepEqual(
+    selectSidenoteFocus(groups, {
+      selectedIndex: 2,
+      viewportStart: 0,
+      viewportEnd: 900,
+      manualSelection: false,
+      readingLine: 400,
+      previousReadingLine: 750,
+      direction: "up",
+    }),
+    { index: 1, manual: false }
+  );
+  assert.deepEqual(
     selectSidenoteFocus(groups, {
       selectedIndex: 1,
       viewportStart: 900,
       viewportEnd: 1200,
+      manualSelection: false,
+      readingLine: 1000,
+      previousReadingLine: 800,
+      direction: "down",
     }),
-    -1
+    { index: -1, manual: false }
   );
 });
 
-test("an explicitly selected offscreen neighbor remains readable until scrolling", () => {
+test("manual selection holds without scrolling and yields when it is behind the reading divider", () => {
   const groups = [
-    { anchor: 50, start: 40, end: 70 },
-    { anchor: 300, start: 280, end: 320 },
+    { anchor: 50, top: 40, height: 30, start: 40, end: 70 },
+    { anchor: 300, top: 280, height: 40, start: 280, end: 320 },
   ];
-  assert.equal(
+  assert.deepEqual(
     selectSidenoteFocus(groups, {
       selectedIndex: 0,
       viewportStart: 100,
       viewportEnd: 700,
-      keepManualSelection: true,
+      manualSelection: true,
+      readingLine: 350,
+      previousReadingLine: 350,
+      direction: "down",
     }),
-    0
+    { index: 0, manual: true }
   );
-  assert.equal(
+  assert.deepEqual(
     selectSidenoteFocus(groups, {
       selectedIndex: 0,
       viewportStart: 100,
       viewportEnd: 700,
+      manualSelection: true,
+      readingLine: 360,
+      previousReadingLine: 350,
+      direction: "down",
     }),
-    1
+    { index: 1, manual: false }
   );
 });
 
@@ -122,7 +145,7 @@ test("focus never changes the base static classification", () => {
   }
 });
 
-test("a focused hidden card reserves space without reclassifying a static neighbor", () => {
+test("heading-aligned focus leaves room for a static neighbor without reclassifying it", () => {
   const groups = [
     { anchor: 180, height: 40 },
     { anchor: 270, height: 180 },
@@ -136,9 +159,8 @@ test("a focused hidden card reserves space without reclassifying a static neighb
     anchorOffset: 20,
   });
   assert.equal(result.items[0].baseStatic, true);
-  assert.equal(result.items[0].visibleStatic, false);
   assert.equal(result.items[1].baseStatic, false);
-  assert.equal(result.focusTop, 180);
+  assert.equal(result.focusTop, 250);
 });
 
 test("a tall offscreen predecessor reserves room across multiple short notes", () => {
@@ -180,7 +202,10 @@ test("dense mixed heights keep the focus in bounds and visible cards disjoint", 
     assert.ok(result.focusTop >= start);
     assert.ok(result.focusTop + groups[focus].height <= end);
     const visible = result.items
-      .filter((item, index) => item.visibleStatic && index !== focus)
+      .filter(
+        (item, index) =>
+          index !== focus && (item.baseStatic || item.visibleRepresentative)
+      )
       .map(item => ({ top: item.top, height: item.height }));
     visible.push({ top: result.focusTop, height: groups[focus].height });
     visible.sort((a, b) => a.top - b.top);
@@ -213,5 +238,5 @@ test("empty and too-short viewports do not produce a static card", () => {
     anchorOffset: 20,
   });
   assert.equal(result.items[0].baseStatic, false);
-  assert.equal(result.focusTop, 80);
+  assert.equal(result.focusTop, 80.8);
 });

@@ -49,16 +49,14 @@
     margin: 0;
     padding: 0.5rem 0.625rem;
     border: 1px solid transparent;
-    border-right: 2px solid transparent;
     border-radius: 0.25rem;
     background: var(--background);
     overflow: hidden;
     visibility: hidden;
     pointer-events: none;
-    transform: translateX(0.25rem) scale(0.98);
-    transform-origin: right center;
+    /* A visible representative may hand over to the dock at the same position.
+       Scaling the incoming card would make that unchanged position appear to jump. */
     transition:
-      transform 180ms ease,
       border-color 180ms ease,
       visibility 0s;
   }
@@ -67,22 +65,25 @@
   #article[data-sidenotes="wide"] .sidenote-card[data-preview="shadow"] {
     visibility: visible;
     pointer-events: auto;
-    transform: none;
     transition-delay: 0s;
   }
   #article[data-sidenotes="wide"] .sidenote-card[data-preview="persistent"] {
     opacity: 1;
-    border-color: color-mix(in srgb, var(--foreground) 9%, transparent);
+    border-color: color-mix(in srgb, var(--foreground) 6%, transparent);
+  }
+  #article[data-sidenotes="wide"]
+    .sidenote-card[data-preview="persistent"]
+    .sidenote-preview {
+    color: var(--muted-foreground);
   }
   #article[data-sidenotes="wide"] .sidenote-card[data-preview="focused"],
   #article[data-sidenotes="wide"] .sidenote-card[data-preview="shadow"] {
-    border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
-    border-right-color: var(--accent);
+    border-color: color-mix(in srgb, var(--foreground) 8%, transparent);
+    border-right-color: color-mix(in srgb, var(--accent) 70%, transparent);
   }
   #article[data-sidenotes="wide"] .sidenote-dock-card[data-moving] {
     transition:
       top 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
-      transform 180ms ease,
       border-color 180ms ease,
       visibility 0s;
   }
@@ -118,6 +119,7 @@
     padding: 0;
     text-align: start;
     color: var(--foreground);
+    transition: color 150ms ease;
     cursor: zoom-in;
   }
   .sidenote-excerpt {
@@ -173,14 +175,15 @@
     top: 0;
     right: 0.5rem;
     width: 1px;
-    background: color-mix(in srgb, var(--foreground) 14%, transparent);
+    /* Match the TOC's neutral track; the dark theme border token is orange. */
+    background: color-mix(in srgb, var(--foreground) 12%, transparent);
   }
   .sidenote-dot {
     z-index: 2;
     position: absolute;
     left: 0;
     transform: translate(-50%, -50%)
-      scale(calc(0.8 + 0.55 * var(--dock-strength, 0)));
+      scale(calc(0.9 + 0.1 * var(--dock-strength, 0)));
     display: grid;
     place-items: center;
     width: 1.875rem;
@@ -207,7 +210,7 @@
   .sidenote-dot[data-active] {
     color: var(--accent);
     opacity: 1;
-    background: color-mix(in srgb, var(--accent) 8%, var(--background));
+    background: var(--background);
   }
   .sidenote-dot:focus-visible {
     outline: 1px solid var(--accent);
@@ -221,9 +224,12 @@
     pointer-events: none;
     overflow: hidden;
     fill: none;
-    stroke: var(--accent);
+    stroke: color-mix(in srgb, var(--foreground) 20%, transparent);
     stroke-width: 1;
-    opacity: 0.55;
+    stroke-linecap: round;
+  }
+  .sidenote-connection-focused {
+    stroke: color-mix(in srgb, var(--accent) 55%, transparent);
   }
   #article[data-sidenotes="wide"] [data-footnote-ref][data-sidenote-active] {
     color: var(--accent);
@@ -347,6 +353,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   #article[data-sidenotes="wide"] .sidenote-card,
+  #article[data-sidenotes="wide"] .sidenote-preview,
   #article[data-sidenotes="wide"] .sidenote-dock-card[data-moving],
   #article[data-sidenotes="wide"] .sidenote-dot {
     transition: none;

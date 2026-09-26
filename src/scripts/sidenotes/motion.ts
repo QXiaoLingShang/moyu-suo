@@ -1,8 +1,9 @@
 export type FocusTarget = {
-  key: string;
+  key: HTMLElement;
   card: HTMLElement;
   top: number;
   baseStatic: boolean;
+  regionKey: HTMLElement;
 };
 
 /** Decouple decoration from focus so rapid input never waits for an animation to finish. */
@@ -33,6 +34,7 @@ export function createSidenoteMotion(
     const changed =
       previous?.key !== next?.key || previous?.baseStatic !== next?.baseStatic;
     const moved = previous?.top !== next?.top;
+    const crossesRegion = previous?.regionKey !== next?.regionKey;
     // Skip a replacement shadow during interruption to avoid a trail of stale previews.
     const interrupted = !!animation;
     // Capture before rendering: reusing a view must not overwrite the origin.
@@ -40,7 +42,7 @@ export function createSidenoteMotion(
       changed &&
       previous &&
       next &&
-      (previous.baseStatic || next.baseStatic) &&
+      (previous.baseStatic || next.baseStatic || crossesRegion) &&
       !interrupted &&
       !reducedMotion.matches &&
       previous.card.isConnected
@@ -50,12 +52,14 @@ export function createSidenoteMotion(
     const copy = source ? (source.cloneNode(true) as HTMLElement) : null;
     if (changed || moved || reducedMotion.matches) cancel();
 
-    // Only moves between nonpersistent cards can reuse the dock without a stationary copy.
+    // Within one dense region the dock moves directly. Region boundaries have
+    // persistent representatives, so entering or leaving them uses a shadow.
     render(
       !!previous &&
         !!next &&
         !previous.baseStatic &&
         !next.baseStatic &&
+        !crossesRegion &&
         (changed || !moved) &&
         !reducedMotion.matches
     );

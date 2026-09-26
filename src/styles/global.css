@@ -34,18 +34,37 @@
   @apply underline decoration-wavy decoration-2 underline-offset-8;
 }
 
+/* Match app-layout's max-w-3xl and px-4 so both margins use the text edge,
+   rather than the padded main container, as their shared layout boundary. */
+:root {
+  --article-content-width: calc(var(--container-3xl) - 2rem);
+  --article-side-gap-ratio: 0.15;
+  --article-side-width-ratio: 0.75;
+  --article-side-max-width-rem: 20;
+}
+
 #article-toc {
   display: none;
 }
 
 @media (min-width: 80rem) {
   #article-toc:not([hidden]) {
+    /* Percentages here resolve against the fixed viewport, excluding its scrollbar. */
+    --article-side-space: calc((100% - var(--article-content-width)) / 2);
     position: fixed;
     z-index: 20;
     inset-block-start: 6rem;
-    inset-inline-end: clamp(1rem, calc((100vw - 80rem) / 2), 12rem);
+    /* Anchor the inner edge, so capping width adds space outside the sidebar
+       without changing the equal text-to-rail gaps. */
+    inset-inline-start: calc(
+      50% + var(--article-content-width) / 2 + var(--article-side-space) *
+        var(--article-side-gap-ratio)
+    );
     display: block;
-    width: 13rem;
+    width: min(
+      calc(var(--article-side-max-width-rem) * 1rem),
+      calc(var(--article-side-space) * var(--article-side-width-ratio))
+    );
   }
 }
 
@@ -111,7 +130,7 @@
 #article-toc-track {
   bottom: 0;
   width: 1px;
-  background-color: var(--border);
+  background-color: color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 
 #article-toc-progress {

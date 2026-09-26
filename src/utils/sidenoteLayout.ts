@@ -1,120 +1,171 @@
-type Viewport = { viewportStart: number; viewportEnd: number };
-type FocusOptions = Viewport & {
-  selectedIndex: number;
-  keepManualSelection?: boolean;
-};
-type LayoutOptions = Viewport & {
-  focusIndex: number;
+import {
+  intersectsSidenoteRange,
+  type SidenoteCardBounds,
+  type SidenoteReadingTarget,
+} from "./sidenoteGeometry";
+
+type ViewportRange = { viewportStart: number; viewportEnd: number };
+type MeasuredGroup = { anchor: number; height: number };
+type GeometryOptions = {
   gap: number;
   anchorOffset: number;
+};
+export type SidenoteLayoutFrame = ViewportRange & {
+  focusIndex: number;
+  previewStart?: number;
+  previewEnd?: number;
+  readingLine?: number;
 };
 export type SidenotePlacement = {
   top: number;
   height: number;
   /** Keep focus out of this classification so selecting a card cannot make it persistent. */
   baseStatic: boolean;
-  /** Whether the persistent preview has room after focus reserves space. */
-  visibleStatic: boolean;
+  regionIndex: number;
+  /** A dense region's fallback stays distinct from a naturally isolated card. */
+  visibleRepresentative: boolean;
 };
-type LayoutResult = { items: SidenotePlacement[]; focusTop: number | null };
+type RegionGeometry = { firstIndex: number; lastIndex: number };
+type NoteRegion = RegionGeometry & { representativeIndex: number };
+export type SidenoteLayoutResult = {
+  items: SidenotePlacement[];
+  regions: NoteRegion[];
+  focusTop: number | null;
+};
+export type PreparedSidenoteLayout = {
+  /** Shared with focus selection so a partially visible card does not lose focus early. */
+  readonly readingTargets: readonly SidenoteReadingTarget[];
+  arrange: (frame: SidenoteLayoutFrame) => SidenoteLayoutResult;
+};
 
-/** Retain a visible selection so scrolling toward another node does not interrupt reading. */
-export function selectSidenoteFocus(
-  groups: readonly { anchor: number; start: number; end: number }[],
-  {
-    selectedIndex: selected,
-    viewportStart: start,
-    viewportEnd: end,
-    keepManualSelection = false,
-  }: FocusOptions
-): number {
-  const intersects = (group: { start: number; end: number }) =>
-    group.end > start && group.start < end;
-  if (
-    selected >= 0 &&
-    groups[selected] &&
-    (keepManualSelection || intersects(groups[selected]))
-  )
-    return selected;
-  const center = (start + end) / 2;
-  return groups.reduce((best, group, index) => {
-    if (!intersects(group)) return best;
-    return best < 0 ||
-      Math.abs(group.anchor - center) < Math.abs(groups[best].anchor - center)
-      ? index
-      : best;
-  }, -1);
-}
-
-/** Deduplicate within a spatial group so distant repeats keep their own navigation positions. */
-export function getSidenoteChoices<T extends { note: unknown }>(
-  references: readonly T[],
-  current?: T
-): T[] {
-  const choices = new Map<unknown, T>();
-  for (const reference of references) {
-    if (!choices.has(reference.note)) choices.set(reference.note, reference);
-  }
-  if (current && choices.has(current.note)) choices.set(current.note, current);
-  return [...choices.values()];
-}
-
-/** Reserve room for focus without changing which cards qualify for merge/split animations. */
+/** One-shot layout for callers without a measurement lifecycle. */
 export function calculateSidenoteLayout(
-  groups: readonly { anchor: number; height: number }[],
-  {
-    focusIndex: focus,
-    viewportStart: start,
-    viewportEnd: end,
-    gap,
-    anchorOffset,
-  }: LayoutOptions
-): LayoutResult {
-  const clamp = (top: number, height: number) =>
-    Math.max(start, Math.min(top, end - height));
-  const items = groups.map(group => {
-    const inRange = group.anchor >= start && group.anchor <= end;
-    const naturalTop =
-      group.anchor - Math.min(anchorOffset, group.height * 0.16);
-    return {
-      top: inRange ? clamp(naturalTop, group.height) : naturalTop,
-      height: group.height,
-      baseStatic: inRange && end > start && group.height <= end - start,
-      visibleStatic: false,
+  groups: readonly MeasuredGroup[],
+  options: GeometryOptions & SidenoteLayoutFrame
+): SidenoteLayoutResult {
+  return prepareSidenoteLayout(groups, options).arrange(options);
+}
+
+/**
+ * Cache article-relative geometry in anchor order; rebuild after measurements change.
+ * Snapshot values so later DOM regrouping cannot partially update the cached regions.
+ */
+export function prepareSidenoteLayout(
+  sourceGroups: readonly MeasuredGroup[],
+  { gap, anchorOffset }: GeometryOptions
+): PreparedSidenoteLayout {
+  const groups = sourceGroups.map(group => ({
+    anchor: group.anchor,
+    height: group.height,
+    naturalTop: group.anchor - Math.min(anchorOffset, group.height * 0.16),
+    regionIndex: -1,
+  }));
+  // Include offscreen neighbors and their furthest edge so one tall note can
+  // connect several short notes without splitting the region as we scroll.
+  const regionsWithBounds: (RegionGeometry & {
+    top: number;
+    bottom: number;
+  })[] = [];
+  groups.forEach((group, index) => {
+    const next = {
+      firstIndex: index,
+      lastIndex: index,
+      top: group.naturalTop,
+      bottom: group.naturalTop + group.height,
     };
-  });
-  // Include offscreen neighbors. A tall preview can overlap more than one
-  // short neighbor, so retain the furthest occupied edge while scanning.
-  let furthest = -1;
-  for (let index = 0; index < items.length; index++) {
-    const item = items[index];
-    if (furthest >= 0) {
-      const previous = items[furthest];
-      if (item.top < previous.top + previous.height + gap) {
-        previous.baseStatic = false;
-        item.baseStatic = false;
-      }
+    let previous = regionsWithBounds.at(-1);
+    while (previous && next.top < previous.bottom + gap) {
+      regionsWithBounds.pop();
+      next.firstIndex = previous.firstIndex;
+      next.top = Math.min(next.top, previous.top);
+      next.bottom = Math.max(next.bottom, previous.bottom);
+      previous = regionsWithBounds.at(-1);
     }
-    if (
-      furthest < 0 ||
-      item.top + item.height > items[furthest].top + items[furthest].height
-    )
-      furthest = index;
-  }
-  const primary = items[focus];
-  const focusTop = primary
-    ? primary.baseStatic
-      ? primary.top
-      : clamp(groups[focus].anchor - primary.height / 2, primary.height)
-    : null;
-  items.forEach((item, index) => {
-    const collidesWithFocus =
-      primary &&
-      focusTop !== null &&
-      index !== focus &&
-      item.top < focusTop + primary.height + gap &&
-      item.top + item.height + gap > focusTop;
-    item.visibleStatic = item.baseStatic && !collidesWithFocus;
+    regionsWithBounds.push(next);
   });
-  return { items, focusTop };
+  const geometry = regionsWithBounds.map(({ firstIndex, lastIndex }) => ({
+    firstIndex,
+    lastIndex,
+  }));
+  geometry.forEach((region, regionIndex) => {
+    for (let index = region.firstIndex; index <= region.lastIndex; index++)
+      groups[index].regionIndex = regionIndex;
+  });
+
+  const readingTargets = groups.map(group => ({
+    anchor: group.anchor,
+    top: group.naturalTop,
+    height: group.height,
+  }));
+
+  return {
+    readingTargets,
+    arrange({
+      focusIndex: focus,
+      viewportStart: start,
+      viewportEnd: end,
+      previewStart = start,
+      previewEnd = end,
+      readingLine = (start + end) / 2,
+    }: SidenoteLayoutFrame): SidenoteLayoutResult {
+      const eligible = (card: SidenoteCardBounds) =>
+        intersectsSidenoteRange(card, previewStart, previewEnd) &&
+        card.height <= end - start;
+      const regions: NoteRegion[] = geometry.map(region => ({
+        ...region,
+        representativeIndex: -1,
+      }));
+      const items = groups.map(group => {
+        const region = geometry[group.regionIndex];
+        // Keep document spacing as cards enter or leave the viewport. Clamping
+        // cards independently can invent a collision, hide a neighbor, then reveal
+        // it again during a single scroll. Focus uses this same position as previews.
+        const top = group.naturalTop;
+        // An anchor can leave the buffer while a tall card still intersects the
+        // screen. Classify by the full displayed footprint to avoid cutting it off.
+        const inRange = eligible({ top, height: group.height });
+        return {
+          top,
+          height: group.height,
+          baseStatic: inRange && region.firstIndex === region.lastIndex,
+          regionIndex: group.regionIndex,
+          visibleRepresentative: false,
+        };
+      });
+      if (end <= start || previewEnd <= previewStart)
+        return { items, regions, focusTop: null };
+
+      const focusAnchor = groups[focus]?.anchor ?? readingLine;
+      for (const region of regions) {
+        if (focus >= region.firstIndex && focus <= region.lastIndex) {
+          region.representativeIndex = focus;
+          continue;
+        }
+        // Nearest to focus means the facing endpoint outside a region. If there is
+        // no active focus inside a long region, it also avoids jumping to its far end.
+        let distance = Infinity;
+        for (
+          let index = region.firstIndex;
+          index <= region.lastIndex;
+          index++
+        ) {
+          if (!eligible(readingTargets[index])) continue;
+          const nextDistance = Math.abs(groups[index].anchor - focusAnchor);
+          if (nextDistance < distance) {
+            distance = nextDistance;
+            region.representativeIndex = index;
+          }
+        }
+      }
+      const primary = items[focus];
+      const focusTop = primary?.top ?? null;
+      items.forEach((item, index) => {
+        item.visibleRepresentative =
+          regions[item.regionIndex].representativeIndex === index &&
+          index !== focus &&
+          !item.baseStatic;
+      });
+      return { items, regions, focusTop };
+    },
+  };
 }

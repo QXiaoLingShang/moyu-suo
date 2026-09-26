@@ -42,6 +42,53 @@
     li {
       @apply marker:text-accent;
     }
+    a[data-footnote-ref] {
+      text-decoration: none;
+      color: var(--muted-foreground);
+      margin-inline: 0.08em;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    a[data-footnote-ref]::before,
+    a[data-footnote-ref]::after {
+      color: var(--muted-foreground);
+      font-weight: 400;
+    }
+
+    a[data-footnote-ref]::before {
+      content: "[";
+    }
+
+    a[data-footnote-ref]::after {
+      content: "]";
+    }
+
+    [data-footnotes] {
+      font-size: 0.92em;
+      line-height: 1.6;
+    }
+
+    [data-footnotes] > ol {
+      margin-block: 1rem 0;
+      padding-inline-start: 1.35em;
+    }
+
+    [data-footnotes] > ol > li {
+      margin-block: 0.375em;
+      padding-inline-start: 0.2em;
+    }
+
+    [data-footnotes] > ol > li p {
+      margin-block: 0.2em;
+      line-height: 1.55;
+    }
+
+    [data-footnotes] a[data-footnote-backref] {
+      margin-inline-start: 0.25em;
+      color: var(--muted-foreground);
+      text-decoration: none;
+    }
 
     /* Unbroken footnote text must stay within the article column. */
     section[data-footnotes] li {

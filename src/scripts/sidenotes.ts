@@ -1,14 +1,12 @@
-import {
-  selectSidenoteFocus,
-  getSidenoteChoices,
-  calculateSidenoteLayout,
-} from "@/utils/sidenoteLayout";
+import { prepareSidenoteLayout } from "@/utils/sidenoteLayout";
+import { getSidenoteChoices } from "@/utils/sidenoteSelection";
 import { createSidenoteMotion } from "./sidenotes/motion";
 import { fragmentId, isElementVisible } from "./sidenotes/dom";
 import {
   collectNotes,
   restoreNotes,
   preferredReference,
+  referenceKey,
   type NoteReference,
   type NoteGroup,
 } from "./sidenotes/model";
@@ -19,8 +17,18 @@ import {
   type PreviewState,
 } from "./sidenotes/views";
 import { createNoteDialog } from "./sidenotes/dialog";
+import { createReadingFocus } from "./sidenotes/reading";
 
 type Selection = NoteReference | null;
+
+// Share the reading insets with height measurement so every card can fit the
+// same viewport used by placement and the automatic reading divider.
+const READING_VIEWPORT = {
+  topRem: 5,
+  bottomRem: 1.5,
+  previewBufferRem: 6,
+  focusRatio: 0.4,
+} as const;
 
 function enhanceSidenotes(article: HTMLElement): () => void {
   const sections = article.querySelectorAll<HTMLElement>(
@@ -84,8 +92,13 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   );
   connector.classList.add("sidenote-connector");
   connector.setAttribute("aria-hidden", "true");
+  const persistentConnections = document.createElementNS(
+    connector.namespaceURI,
+    "path"
+  );
   const connection = document.createElementNS(connector.namespaceURI, "path");
-  connector.append(connection);
+  connection.classList.add("sidenote-connection-focused");
+  connector.append(persistentConnections, connection);
   sidebar.append(connector);
   let wide = false,
     printing = false,
@@ -93,6 +106,8 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     paintFrame = 0,
     historyFrame = 0;
   let selected: Selection = null;
+  const readingFocus = createReadingFocus();
+  let previewLayout = prepareSidenoteLayout([], { gap: 0, anchorOffset: 0 });
   let dockEngaged = false;
   const motion = createSidenoteMotion(previewList, reducedMotion);
   let sidebarWidth = 0;
@@ -132,8 +147,13 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     const note = card && bySource.get(card);
     return note ? { note, ref: preferredReference(note) } : null;
   }
-  function remember(selection: Selection) {
+  function remember(
+    selection: Selection,
+    source: "manual" | "reading" = "manual"
+  ) {
     selected = selection;
+    if (source === "manual")
+      readingFocus.selectManually({ hasSelection: !!selection });
     const group = selection ? groupFor(selection) : undefined;
     if (group && selection) group.current = selection;
     if (selection?.ref?.id) {
@@ -148,67 +168,87 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     );
   }
   let activeReference: HTMLAnchorElement | undefined;
+  function connectionPath({
+    top,
+    height,
+    anchor,
+  }: {
+    top: number;
+    height: number;
+    anchor: number;
+  }): string {
+    const x = sidebarWidth - 3 * rem;
+    // Attach near the heading so changing excerpt length does not shift the line.
+    const y = top + Math.min(height / 2, 1.25 * rem);
+    return `M ${x} ${y} C ${x + rem} ${y}, ${x + rem} ${anchor}, ${sidebarWidth - 0.5 * rem} ${anchor}`;
+  }
+
   function paint() {
     cancelAnimationFrame(paintFrame);
     paintFrame = 0;
     if (!wide || signal.aborted) return;
     const articleTop = article.getBoundingClientRect().top;
-    const viewportStart = 5 * rem - articleTop;
-    const viewportEnd = Math.min(
-      articleHeight,
-      innerHeight - 1.5 * rem - articleTop
+    const readingTop = READING_VIEWPORT.topRem * rem;
+    const readingHeight = Math.max(
+      0,
+      innerHeight - readingTop - READING_VIEWPORT.bottomRem * rem
     );
+    const viewportStart = readingTop - articleTop;
+    // The last card may extend beyond the article. Clipping to articleHeight
+    // would shrink its available viewport and hide it before it scrolls away.
+    const viewportEnd =
+      innerHeight - READING_VIEWPORT.bottomRem * rem - articleTop;
     const selectedIndex = groups.findIndex(group =>
       group.references.some(
         item => item.note === selected?.note && item.ref === selected?.ref
       )
     );
-    const focusIndex = selectSidenoteFocus(
-      groups.map(group => ({
-        anchor: group.anchor,
-        start: group.anchor - 0.75 * rem,
-        end: group.anchor + 0.75 * rem,
-      })),
-      {
-        selectedIndex,
-        viewportStart,
-        viewportEnd,
-        keepManualSelection:
-          dockEngaged &&
-          selectedIndex >= 0 &&
-          groups[selectedIndex].anchor + articleTop >= 0 &&
-          groups[selectedIndex].anchor + articleTop < innerHeight,
-      }
-    );
+    const previewBuffer = READING_VIEWPORT.previewBufferRem * rem;
+    const previewStart = -articleTop - previewBuffer;
+    const previewEnd = innerHeight - articleTop + previewBuffer;
+    // Keep the reading divider fixed on screen; the end of the article must not
+    // move it and manufacture crossings as the endnote list enters view.
+    const readingLine =
+      readingTop + readingHeight * READING_VIEWPORT.focusRatio - articleTop;
+    const focusIndex = readingFocus.resolve(previewLayout.readingTargets, {
+      selectedIndex,
+      viewportStart: previewStart,
+      viewportEnd: previewEnd,
+      readingLine,
+    });
     const primary = groups[focusIndex];
     if (primary) {
-      if (focusIndex !== selectedIndex) remember(primary.current);
+      if (focusIndex !== selectedIndex) remember(primary.current, "reading");
       else if (selected) primary.current = selected;
     }
     // Cached heights avoid forcing card layout on every scroll frame.
-    const placement = calculateSidenoteLayout(groups, {
+    const placement = previewLayout.arrange({
       focusIndex,
       viewportStart,
       viewportEnd,
-      gap: 0.75 * rem,
-      anchorOffset: 1.25 * rem,
+      previewStart,
+      previewEnd,
+      readingLine,
     });
     const focusedLayout = placement.items[focusIndex];
+    const regionFirst = focusedLayout
+      ? groups[placement.regions[focusedLayout.regionIndex].firstIndex]
+          .references[0]
+      : undefined;
     const target =
-      primary && focusedLayout && placement.focusTop !== null
+      primary && focusedLayout && regionFirst && placement.focusTop !== null
         ? {
-            key:
-              primary.current.note.source.id +
-              ":" +
-              (primary.current.ref?.id ?? ""),
+            key: referenceKey(primary.current),
             card: focusedLayout.baseStatic
               ? previews.forGroup(primary).card
               : dockCard,
             top: placement.focusTop,
             baseStatic: focusedLayout.baseStatic,
+            regionKey: referenceKey(regionFirst),
           }
         : null;
 
+    const persistentPaths: string[] = [];
     motion.update(target, moveDock => {
       const currentViews = new Set<NoteView>();
       groups.forEach((group, index) => {
@@ -218,13 +258,21 @@ function enhanceSidenotes(article: HTMLElement): () => void {
         const state: PreviewState =
           group === primary && item.baseStatic
             ? "focused"
-            : item.visibleStatic
+            : item.baseStatic || item.visibleRepresentative
               ? "persistent"
               : "hidden";
         if (state !== "hidden") {
           previews.configure(group, view);
           const top = item.top + "px";
           if (view.card.style.top !== top) view.card.style.top = top;
+          if (state === "persistent")
+            persistentPaths.push(
+              connectionPath({
+                top: item.top,
+                height: group.height,
+                anchor: group.anchor,
+              })
+            );
         }
         setPreviewState(view, state, item.baseStatic);
       });
@@ -256,14 +304,20 @@ function enhanceSidenotes(article: HTMLElement): () => void {
       if (dot.hasAttribute("data-active") !== active)
         dot.toggleAttribute("data-active", active);
     }
-    if (primary && target && !target.baseStatic) {
-      const x = sidebarWidth - 3 * rem;
-      const y = target.top + Math.min(primary.height / 2, 3 * rem);
-      connection.setAttribute(
-        "d",
-        `M ${x} ${y} C ${x + rem} ${y}, ${x + rem} ${primary.anchor}, ${sidebarWidth - 0.5 * rem} ${primary.anchor}`
-      );
-    } else connection.removeAttribute("d");
+    // Share two SVG paths instead of allocating a connector node per note on scroll.
+    const persistentPath = persistentPaths.join(" ");
+    if (persistentConnections.getAttribute("d") !== persistentPath)
+      persistentConnections.setAttribute("d", persistentPath);
+    const focusedPath =
+      primary && target
+        ? connectionPath({
+            top: target.top,
+            height: primary.height,
+            anchor: primary.anchor,
+          })
+        : "";
+    if (connection.getAttribute("d") !== focusedPath)
+      connection.setAttribute("d", focusedPath);
     const nextReference = primary?.current.ref;
     if (activeReference !== nextReference) {
       activeReference?.removeAttribute("data-sidenote-active");
@@ -282,9 +336,29 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     // Width/font/content changes invalidate both measured geometry and any
     // shadow captured from the previous grouping.
     motion.reset();
-    rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    readingFocus.invalidateGeometry();
+    const rootStyle = getComputedStyle(document.documentElement);
+    rem = parseFloat(rootStyle.fontSize) || 16;
     const rect = article.getBoundingClientRect();
-    const available = rect.left - 2.5 * rem;
+    // Read the same proportions as the TOC without depending on its visibility
+    // or initialization order. clientWidth excludes the scrollbar, like fixed CSS.
+    const sideSpace = Math.max(
+      0,
+      (document.documentElement.clientWidth - rect.width) / 2
+    );
+    const gapRatio = parseFloat(
+      rootStyle.getPropertyValue("--article-side-gap-ratio")
+    );
+    const widthRatio = parseFloat(
+      rootStyle.getPropertyValue("--article-side-width-ratio")
+    );
+    const maxWidth =
+      parseFloat(rootStyle.getPropertyValue("--article-side-max-width-rem")) *
+      rem;
+    const railDistance = sideSpace * gapRatio;
+    const sidebarGap = railDistance - 0.5 * rem;
+    // The rail sits 0.5rem inside the sidebar, so include that inset in its width.
+    const available = Math.min(sideSpace * widthRatio, maxWidth) + 0.5 * rem;
     const wasWide = wide;
     wide = showSidenotes && media.matches && !printing && available >= 12 * rem;
     section.hidden = !showEndnotes && !printing;
@@ -296,17 +370,15 @@ function enhanceSidenotes(article: HTMLElement): () => void {
       activeReference = undefined;
     } else {
       article.dataset.sidenotes = "wide";
-      article.style.setProperty(
-        "--sidenote-width",
-        `${Math.min(available, 20 * rem)}px`
-      );
-      article.style.setProperty("--sidenote-gap", `${1.5 * rem}px`);
+      article.style.setProperty("--sidenote-width", `${available}px`);
+      article.style.setProperty("--sidenote-gap", `${sidebarGap}px`);
       previewHeight = Math.max(
         1,
         Math.min(
           11 * rem,
           Math.max(7 * rem, innerHeight * 0.26),
-          innerHeight - 6.5 * rem
+          innerHeight -
+            (READING_VIEWPORT.topRem + READING_VIEWPORT.bottomRem) * rem
         )
       );
       article.style.setProperty(
@@ -354,19 +426,26 @@ function enhanceSidenotes(article: HTMLElement): () => void {
             current: entry,
           });
       }
+      const previousSelections = new Map(
+        previousGroups.map(
+          group => [referenceKey(group.current), group.current] as const
+        )
+      );
       for (const group of groups) {
-        const previous = previousGroups.find(old =>
-          group.references.some(
-            item =>
-              item.ref === old.current.ref && item.note === old.current.note
-          )
-        );
-        if (previous) group.current = previous.current;
+        for (const reference of group.references) {
+          const previous = previousSelections.get(referenceKey(reference));
+          if (!previous) continue;
+          group.current = previous;
+          break;
+        }
       }
       // Batch writes before height reads to avoid a layout flush for every variant.
       // A group reserves its tallest choice so switching does not move its tabs.
-      const measurementViews = groups.map(group =>
-        getSidenoteChoices(group.references, group.current).map(item => {
+      const groupChoices = groups.map(group =>
+        getSidenoteChoices(group.references, group.current)
+      );
+      const measurementViews = groups.map((group, index) =>
+        groupChoices[index].map(item => {
           const view = previews.forGroup(group, item);
           previews.configure({ ...group, current: item }, view);
           return view;
@@ -378,7 +457,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
       const old = Array.from(dotReferences.keys());
       dotReferences.clear();
       groups.forEach((group, index) => {
-        const choices = getSidenoteChoices(group.references, group.current);
+        const choices = groupChoices[index];
         const dot = old[index] ?? document.createElement("button");
         dot.type = "button";
         dot.className = "sidenote-dot";
@@ -406,6 +485,10 @@ function enhanceSidenotes(article: HTMLElement): () => void {
         group.height = Math.max(
           ...measurementViews[index].map(view => view.card.offsetHeight)
         );
+      });
+      previewLayout = prepareSidenoteLayout(groups, {
+        gap: 0.75 * rem,
+        anchorOffset: 1.25 * rem,
       });
       sidebarWidth = sidebar.getBoundingClientRect().width;
       connector.setAttribute("width", String(sidebarWidth));
@@ -702,7 +785,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
           (selection.note !== selected?.note ||
             selection.ref !== selected?.ref));
       dockEngaged = !!selection;
-      if (selection) remember(selection);
+      if (changed && selection) remember(selection);
       if (changed) schedulePaint();
     },
     { passive: true, signal }
@@ -733,9 +816,10 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   window.addEventListener(
     "scroll",
     () => {
-      // Scrolling cancels hover priority so a stationary pointer cannot pin the old
-      // selection; the normal focus memory still keeps a visible selection open.
+      // Only a new pointer action can override reading; a stationary pointer
+      // must not reselect an old note as the document moves underneath it.
       dockEngaged = false;
+      readingFocus.scrolled();
       schedulePaint();
     },
     { passive: true, signal }

@@ -20,6 +20,11 @@ export type NoteGroup = {
   current: NoteReference;
 };
 
+/** DOM identity survives regrouping without conflating distant references to the same note. */
+export function referenceKey(reference: NoteReference): HTMLElement {
+  return reference.ref ?? reference.note.source;
+}
+
 function plainText(node: Node): string {
   // Controls are not note content; KaTeX's parallel MathML would repeat the formula.
   if (
