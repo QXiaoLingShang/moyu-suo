@@ -15,6 +15,7 @@ import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import config from "@/config";
+import "@/styles/sidenotes.css";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
@@ -153,6 +154,8 @@ const ogImage = ogImageUrl
 
     <article
       id="article"
+      data-show-sidenotes={String(config.features.showSidenotes)}
+      data-show-endnotes={String(config.features.showEndnotes)}
       class:list={[
         "mt-8 w-full",
         "app-prose max-w-app",
@@ -257,7 +260,7 @@ const ogImage = ogImageUrl
 
     const headings = Array.from(
       article.querySelectorAll("h2[id], h3[id], h4[id], h5[id], h6[id]")
-    );
+    ).filter(heading => !heading.closest("[data-footnotes]"));
     if (headings.length < 2) return;
 
     const roots = [];
@@ -478,7 +481,7 @@ const ogImage = ogImageUrl
       document.querySelectorAll(
         "#article h2, #article h3, #article h4, #article h5, #article h6"
       )
-    );
+    ).filter(heading => !heading.closest("[data-footnotes]"));
     for (const heading of headings) {
       heading.classList.add("group");
       const link = document.createElement("a");
@@ -596,6 +599,7 @@ const ogImage = ogImageUrl
       overlay = document.createElement("div");
       overlay.setAttribute("role", "dialog");
       overlay.setAttribute("aria-modal", "true");
+      overlay.setAttribute("data-image-lightbox", "");
       overlay.setAttribute(
         "aria-label",
         alt ? `Image preview: ${alt}` : "Image preview"
@@ -738,7 +742,9 @@ const ogImage = ogImageUrl
         }
       });
 
-      document.body.appendChild(overlay);
+      // A body-level overlay cannot cover a modal dialog's top layer, regardless of z-index.
+      const containingDialog = trigger?.closest("dialog[open]");
+      (containingDialog ?? document.body).appendChild(overlay);
       lockPageScroll();
       document.addEventListener("keydown", onKeyDown);
       window.__closeLightbox = close;
@@ -747,7 +753,7 @@ const ogImage = ogImageUrl
       closeButton.focus();
     }
 
-    function close() {
+    function close(immediate = false) {
       if (!overlay) return;
       const el = overlay;
       overlay = null;
@@ -763,7 +769,13 @@ const ogImage = ogImageUrl
         unlockPageScroll();
       };
 
-      if (prefersReducedMotion()) {
+      // A parent note dialog owns its own scroll lock. Release the nested
+      // image lock before that dialog restores the page's original styles.
+      if (
+        immediate === true ||
+        el.closest("dialog") ||
+        prefersReducedMotion()
+      ) {
         el.remove();
         restoreScrollLock();
         return;
@@ -782,11 +794,22 @@ const ogImage = ogImageUrl
 
     function onKeyDown(e) {
       if (e.key === "Escape") {
+        // Consume Escape here so the native dialog underneath does not close as well.
+        e.preventDefault();
         close();
       } else if (e.key === "Tab") {
         trapFocus(e);
       }
     }
+
+    article.addEventListener("sidenote:before-close", event => {
+      if (
+        overlay &&
+        event.target instanceof Element &&
+        event.target.contains(overlay)
+      )
+        close(true);
+    });
 
     // Keep keyboard focus inside the open dialog.
     function trapFocus(e) {
@@ -843,4 +866,8 @@ const ogImage = ogImageUrl
   document.addEventListener("astro:after-swap", () =>
     window.scrollTo({ left: 0, top: 0, behavior: "instant" })
   );
+</script>
+
+<script>
+  import "@/scripts/sidenotes";
 </script>

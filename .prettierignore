@@ -3,6 +3,7 @@
 
 # Except these files & folders
 !/src
+!/tests
 !/public
 !/.github
 !tsconfig.json

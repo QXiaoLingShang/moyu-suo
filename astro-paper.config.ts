@@ -29,6 +29,10 @@ export default defineAstroPaperConfig({
     dynamicOgImage: true,
     showArchives: true,
     showBackButton: true,
+    // 两个开关独立生效；边注解仅在宽屏留白足够时显示。
+    showSidenotes: true,
+    // 关闭文末列表后，上标仍可打开详情；打印和无 JS 时保留列表。
+    showEndnotes: true,
     // 文章源在仓库根 posts/，与主题自带编辑链接不一致，先关闭
     editPost: { enabled: false },
     search: "pagefind",

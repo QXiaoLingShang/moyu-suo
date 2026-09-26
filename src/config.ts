@@ -31,6 +31,8 @@ const config: ResolvedAstroPaperConfig = {
     dynamicOgImage: userConfig.features?.dynamicOgImage ?? true,
     showArchives: userConfig.features?.showArchives ?? true,
     showBackButton: userConfig.features?.showBackButton ?? true,
+    showSidenotes: userConfig.features?.showSidenotes ?? true,
+    showEndnotes: userConfig.features?.showEndnotes ?? true,
     editPost: userConfig.features?.editPost ?? { enabled: false },
     search: userConfig.features?.search ?? "pagefind",
   },

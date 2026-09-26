@@ -46,6 +46,10 @@ interface FeaturesConfig {
   showArchives?: boolean;
   /** Show back button on post detail pages. Defaults to true. */
   showBackButton?: boolean;
+  /** Show note previews in the left margin when space permits. Defaults to true. */
+  showSidenotes?: boolean;
+  /** Show the endnote list on screen. Defaults to true; printing retains it. */
+  showEndnotes?: boolean;
   /** "Edit page" link shown on post detail pages. */
   editPost?:
     | {
