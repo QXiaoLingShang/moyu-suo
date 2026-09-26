@@ -65,7 +65,9 @@
 
     [data-footnotes] > ol {
       margin-block: 1rem 0;
-      padding-inline-start: 1.35em;
+      /* Outside markers need room for multi-digit numbers and their trailing gap;
+         otherwise they extend into the reading-focus rail beside the article. */
+      padding-inline-start: calc(4ch + 1em);
     }
 
     [data-footnotes] > ol > li::marker {
