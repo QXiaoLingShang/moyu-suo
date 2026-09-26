@@ -50,18 +50,12 @@
       font-variant-numeric: tabular-nums;
     }
 
-    a[data-footnote-ref]::before,
-    a[data-footnote-ref]::after {
-      color: var(--muted-foreground);
+    a[data-footnote-ref]:hover {
+      color: var(--accent);
+    }
+
+    a[data-footnote-ref] > .footnote-bracket {
       font-weight: 400;
-    }
-
-    a[data-footnote-ref]::before {
-      content: "[";
-    }
-
-    a[data-footnote-ref]::after {
-      content: "]";
     }
 
     [data-footnotes] {
@@ -72,6 +66,11 @@
     [data-footnotes] > ol {
       margin-block: 1rem 0;
       padding-inline-start: 1.35em;
+    }
+
+    [data-footnotes] > ol > li::marker {
+      color: var(--muted-foreground);
+      font-variant-numeric: tabular-nums;
     }
 
     [data-footnotes] > ol > li {

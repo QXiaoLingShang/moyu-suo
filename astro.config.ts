@@ -13,6 +13,7 @@ import remarkCollapse from "remark-collapse";
 import remarkMath from "remark-math";
 import remarkGemoji from "remark-gemoji";
 import rehypeCallouts from "rehype-callouts";
+import rehypeFootnoteBrackets from "./src/utils/rehypeFootnoteBrackets";
 import rehypeKatex from "rehype-katex";
 import remarkDisplayMath from "./src/utils/remarkDisplayMath";
 import {
@@ -55,7 +56,7 @@ export default defineConfig({
         remarkToc,
         [remarkCollapse, { test: "Table of contents" }],
       ],
-      rehypePlugins: [rehypeKatex, rehypeCallouts],
+      rehypePlugins: [rehypeKatex, rehypeCallouts, rehypeFootnoteBrackets],
     }),
     shikiConfig: {
       themes: { light: "min-light", dark: "night-owl" },
