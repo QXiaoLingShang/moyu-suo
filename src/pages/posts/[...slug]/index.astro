@@ -3,6 +3,7 @@ import { type CollectionEntry, getCollection, render } from "astro:content";
 import PostLayout from "@/layouts/PostLayout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
+import ReadingFocusMenu from "@/components/ReadingFocusMenu.astro";
 import Datetime from "@/components/Datetime.astro";
 import Tag from "@/components/Tag.astro";
 import { getPostSlug, getPostUrl } from "@/utils/getPostPaths";
@@ -17,6 +18,7 @@ import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import config from "@/config";
 import "@/styles/sidenotes.css";
+import "@/styles/reading-focus.css";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
@@ -137,6 +139,7 @@ const ogImage = ogImageUrl
     data-pagefind-ignore={isTest ? "" : undefined}
   >
     <h1
+      data-reading-focus-title
       style={{ viewTransitionName: toTransitionName(post.id) }}
       class="text-accent inline-block text-2xl font-bold sm:text-3xl"
     >
@@ -163,10 +166,27 @@ const ogImage = ogImageUrl
       <EditPost {hideEditPost} {post} class="max-sm:hidden" />
     </div>
 
+    {config.features.readingFocus.enabled && <ReadingFocusMenu />}
+
     <article
       id="article"
       data-show-sidenotes={String(config.features.showSidenotes)}
       data-show-endnotes={String(config.features.showEndnotes)}
+      data-reading-focus={String(config.features.readingFocus.enabled)}
+      data-reading-focus-default={String(
+        config.features.readingFocus.defaultEnabled
+      )}
+      data-reading-focus-style={config.features.readingFocus.defaultStyle}
+      data-reading-focus-duration={config.features.readingFocus
+        .highlightDuration}
+      data-reading-focus-offset={config.features.readingFocus
+        .headingOffsetPercent}
+      data-reading-focus-toc-highlight={String(
+        config.features.readingFocus.highlightTocTarget
+      )}
+      style={{
+        "--reading-focus-heading-offset": `${config.features.readingFocus.headingOffsetPercent}vh`,
+      }}
       class:list={[
         "mt-8 w-full",
         "app-prose max-w-app",
@@ -214,6 +234,10 @@ const ogImage = ogImageUrl
 
   <Footer />
 </PostLayout>
+
+<script>
+  import "@/scripts/reading-focus";
+</script>
 
 <script is:inline data-astro-rerun>
   function createProgressBar() {

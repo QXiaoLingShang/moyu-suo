@@ -33,6 +33,23 @@ interface PostsConfig {
   scheduledPostMargin?: number;
 }
 
+export type ReadingFocusStyle = "left" | "right" | "block";
+
+interface ReadingFocusConfig {
+  /** Offer reading-focus controls on post pages. Defaults to true. */
+  enabled?: boolean;
+  /** Initial pointer-following state before a reader saves a preference. Defaults to true. */
+  defaultEnabled?: boolean;
+  /** Initial visual style before a reader saves a preference. Defaults to "left". */
+  defaultStyle?: ReadingFocusStyle;
+  /** Initially highlight a heading reached from the article TOC. Defaults to true. */
+  highlightTocTarget?: boolean;
+  /** Heading cue duration in milliseconds (2000–8000, rounded to whole seconds). Defaults to 4000. */
+  highlightDuration?: number;
+  /** Viewport percentage left above an anchor heading (10–40). Defaults to 22. */
+  headingOffsetPercent?: number;
+}
+
 interface FeaturesConfig {
   /** Enable light/dark mode toggle. Defaults to true. */
   lightAndDarkMode?: boolean;
@@ -50,6 +67,8 @@ interface FeaturesConfig {
   showSidenotes?: boolean;
   /** Show the endnote list on screen. Defaults to true; printing retains it. */
   showEndnotes?: boolean;
+  /** Optional reading aid for post content and article-TOC navigation. */
+  readingFocus?: ReadingFocusConfig;
   /** "Edit page" link shown on post detail pages. */
   editPost?:
     | {
@@ -121,10 +140,14 @@ type ResolvedSiteConfig = Required<
 > &
   Pick<SiteConfig, "profile" | "googleVerification">;
 
+type ResolvedFeaturesConfig = Omit<Required<FeaturesConfig>, "readingFocus"> & {
+  readingFocus: Required<ReadingFocusConfig>;
+};
+
 export interface ResolvedAstroPaperConfig {
   site: ResolvedSiteConfig;
   posts: Required<PostsConfig>;
-  features: Required<FeaturesConfig>;
+  features: ResolvedFeaturesConfig;
   socials: SocialLink[];
   shareLinks: ShareLink[];
 }

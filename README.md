@@ -27,6 +27,7 @@
 - 按分类、标签和日期浏览文章，也可以全文搜索
 - 支持 Markdown、代码高亮、KaTeX 数学公式、Mermaid 图表和提示块
 - 文章图片可放大查看；支持 RSS 订阅
+- 可设置的[阅读聚焦](src/scripts/reading-focus/README.md)：鼠标跟随强调线或区域高亮、目录跳转标题提示
 - 静态生成并部署到 GitHub Pages
 
 ## 技术栈

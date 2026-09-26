@@ -1,0 +1,379 @@
+.reading-focus-toolbar {
+  position: relative;
+  z-index: 21;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-block-start: 0.75rem;
+}
+
+.reading-focus-toolbar[hidden] {
+  display: none;
+}
+
+.reading-focus-menu {
+  position: relative;
+}
+
+.reading-focus-summary {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0.375rem 0.5rem;
+  list-style: none;
+  border-radius: 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.reading-focus-summary::-webkit-details-marker {
+  display: none;
+}
+
+.reading-focus-summary::marker {
+  content: "";
+}
+
+.reading-focus-summary:hover,
+.reading-focus-menu[open] .reading-focus-summary {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.reading-focus-summary svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.reading-focus-panel {
+  position: absolute;
+  z-index: 70;
+  inset-block-start: calc(100% + 0.75rem);
+  inset-inline-end: 0;
+  width: min(19rem, calc(100vw - 2rem));
+  max-height: min(30rem, 70dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  box-shadow: 0 0.75rem 2.25rem rgb(0 0 0 / 16%);
+  color: var(--foreground);
+  backdrop-filter: blur(0.75rem);
+}
+
+.reading-focus-panel-heading {
+  margin-block-end: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.reading-focus-switch-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  min-height: 2.5rem;
+  cursor: pointer;
+}
+
+.reading-focus-switch-row > input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.reading-focus-switch {
+  position: relative;
+  width: 2.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background: var(--muted);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.reading-focus-switch::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.1875rem;
+  inset-inline-start: 0.1875rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: var(--muted-foreground);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.reading-focus-switch-row > input:checked + .reading-focus-switch {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 24%, var(--background));
+}
+
+.reading-focus-switch-row > input:checked + .reading-focus-switch::after {
+  background: var(--accent);
+  transform: translateX(1rem);
+}
+
+[dir="rtl"]
+  .reading-focus-switch-row
+  > input:checked
+  + .reading-focus-switch::after {
+  transform: translateX(-1rem);
+}
+
+.reading-focus-switch-row > input:focus-visible + .reading-focus-switch,
+.reading-focus-summary:focus-visible,
+.reading-focus-style-options input:focus-visible + span {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.reading-focus-styles {
+  margin-block: 0.875rem;
+  padding-block: 0.75rem;
+  border-block: 1px dashed var(--border);
+}
+
+.reading-focus-styles legend {
+  margin-block-end: 0.5rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.reading-focus-style-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.375rem;
+}
+
+.reading-focus-style-options label {
+  min-width: 0;
+  cursor: pointer;
+}
+
+.reading-focus-style-options input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.reading-focus-style-preview {
+  display: grid;
+  min-height: 3.5rem;
+  place-items: center;
+  gap: 0.25rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.6875rem;
+  line-height: 1.1;
+  text-align: center;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.reading-focus-style-preview > span {
+  position: relative;
+  display: block;
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 0.125rem;
+  background: var(--muted);
+}
+
+.reading-focus-style-preview.is-left > span {
+  border-left: 0.1875rem solid var(--accent);
+}
+
+.reading-focus-style-preview.is-right > span {
+  border-right: 0.1875rem solid var(--accent);
+}
+
+.reading-focus-style-preview.is-block > span {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.reading-focus-style-options input:checked + .reading-focus-style-preview {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  color: var(--accent);
+}
+
+#article :is(h1, h2, h3, h4, h5, h6)[id] {
+  scroll-margin-block-start: var(--reading-focus-heading-offset, 22vh);
+}
+
+.reading-focus-range {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.75rem;
+  margin-block-start: 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.reading-focus-range input {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1.75rem;
+  accent-color: var(--accent);
+}
+
+.reading-focus-range input:focus-visible {
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+.reading-focus-overlay {
+  --reading-focus-left: 0px;
+  --reading-focus-top: 0px;
+  --reading-focus-width: 0px;
+  --reading-focus-height: 0px;
+  position: fixed;
+  z-index: 15;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.reading-focus-overlay[data-visible="true"] {
+  opacity: 1;
+}
+
+.reading-focus-overlay[data-motion="smooth"] {
+  transition:
+    opacity 0.12s ease,
+    transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reading-focus-overlay[data-style="left"],
+.reading-focus-overlay[data-style="right"] {
+  top: 0;
+  left: 0;
+  width: 0.1875rem;
+  height: var(--reading-focus-height);
+  border-radius: 9999px;
+  background: var(--accent);
+}
+
+.reading-focus-overlay[data-style="left"] {
+  transform: translate(
+    calc(var(--reading-focus-left) - 0.625rem),
+    var(--reading-focus-top)
+  );
+}
+
+.reading-focus-overlay[data-style="right"] {
+  transform: translate(
+    calc(var(--reading-focus-left) + var(--reading-focus-width) + 0.4375rem),
+    var(--reading-focus-top)
+  );
+}
+
+.reading-focus-overlay[data-style="block"] {
+  top: 0;
+  left: 0;
+  width: calc(var(--reading-focus-width) + 0.75rem);
+  height: calc(var(--reading-focus-height) + 0.5rem);
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+  transform: translate(
+    calc(var(--reading-focus-left) - 0.375rem),
+    calc(var(--reading-focus-top) - 0.25rem)
+  );
+}
+
+#article .reading-focus-target {
+  animation: reading-focus-target var(--reading-focus-duration, 4000ms) ease-out;
+}
+
+#article .reading-focus-target[data-reading-focus-arriving] {
+  animation-play-state: paused;
+}
+
+@keyframes reading-focus-target {
+  0%,
+  85% {
+    border-radius: 0.25rem;
+    background-color: color-mix(in srgb, var(--accent) 20%, transparent);
+    box-shadow: 0 0 0 0.35rem color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .reading-focus-summary,
+  .reading-focus-switch,
+  .reading-focus-switch::after,
+  .reading-focus-style-preview,
+  .reading-focus-overlay,
+  .reading-focus-overlay[data-motion="smooth"] {
+    transition: none;
+  }
+
+  #article .reading-focus-target {
+    animation: none;
+    background-color: color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+}
+
+.reading-focus-touch-hint {
+  display: none;
+  margin-block-start: 0.375rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+}
+
+@media (any-hover: none) {
+  .reading-focus-touch-hint {
+    display: block;
+  }
+}
+
+@media print {
+  .reading-focus-toolbar,
+  .reading-focus-overlay {
+    display: none;
+  }
+
+  #article .reading-focus-target {
+    animation: none;
+    background: transparent;
+    box-shadow: none;
+  }
+}

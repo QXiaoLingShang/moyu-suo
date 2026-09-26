@@ -33,6 +33,17 @@ const config: ResolvedAstroPaperConfig = {
     showBackButton: userConfig.features?.showBackButton ?? true,
     showSidenotes: userConfig.features?.showSidenotes ?? true,
     showEndnotes: userConfig.features?.showEndnotes ?? true,
+    readingFocus: {
+      enabled: userConfig.features?.readingFocus?.enabled ?? true,
+      defaultEnabled: userConfig.features?.readingFocus?.defaultEnabled ?? true,
+      defaultStyle: userConfig.features?.readingFocus?.defaultStyle ?? "left",
+      highlightTocTarget:
+        userConfig.features?.readingFocus?.highlightTocTarget ?? true,
+      highlightDuration:
+        userConfig.features?.readingFocus?.highlightDuration ?? 4000,
+      headingOffsetPercent:
+        userConfig.features?.readingFocus?.headingOffsetPercent ?? 22,
+    },
     editPost: userConfig.features?.editPost ?? { enabled: false },
     search: userConfig.features?.search ?? "pagefind",
   },

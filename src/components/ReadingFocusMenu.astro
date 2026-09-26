@@ -1,0 +1,131 @@
+---
+import config from "@/config";
+
+const locale = Astro.currentLocale ?? config.site.lang;
+const isEnglish = locale.toLowerCase().startsWith("en");
+
+const labels = isEnglish
+  ? {
+      title: "Reading focus",
+      pointer: "Follow pointer",
+      style: "Focus style",
+      left: "Left line",
+      right: "Right line",
+      block: "Highlight",
+      toc: "Highlight TOC target",
+      touch: "Pointer focus is available when using a mouse.",
+      duration: "Heading highlight duration",
+      offset: "Space above target heading",
+      seconds: "s",
+    }
+  : {
+      title: "阅读聚焦",
+      pointer: "跟随鼠标聚焦",
+      style: "聚焦样式",
+      left: "左侧线",
+      right: "右侧线",
+      block: "区域高亮",
+      toc: "高亮目录跳转标题",
+      touch: "连接鼠标后可使用跟随聚焦。",
+      duration: "标题高亮时长",
+      offset: "跳转顶部留白",
+      seconds: "秒",
+    };
+---
+
+<div class="reading-focus-toolbar" data-pagefind-ignore hidden>
+  <details id="reading-focus-menu" class="reading-focus-menu">
+    <summary class="reading-focus-summary">
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path
+          d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"
+        ></path>
+        <path d="M7 12h10"></path>
+      </svg>
+      <span>{labels.title}</span>
+    </summary>
+
+    <div class="reading-focus-panel">
+      <div class="reading-focus-panel-heading">{labels.title}</div>
+
+      <label class="reading-focus-switch-row">
+        <span>{labels.pointer}</span>
+        <input type="checkbox" data-reading-focus-toggle />
+        <span class="reading-focus-switch" aria-hidden="true"></span>
+      </label>
+
+      <p class="reading-focus-touch-hint">{labels.touch}</p>
+
+      <fieldset class="reading-focus-styles">
+        <legend>{labels.style}</legend>
+        <div class="reading-focus-style-options">
+          {
+            (["left", "right", "block"] as const).map(style => (
+              <label>
+                <input
+                  type="radio"
+                  name="reading-focus-style"
+                  value={style}
+                  data-reading-focus-style
+                />
+                <span class={`reading-focus-style-preview is-${style}`}>
+                  <span aria-hidden="true" />
+                  {labels[style]}
+                </span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <label class="reading-focus-switch-row">
+        <span>{labels.toc}</span>
+        <input type="checkbox" data-reading-focus-toc-toggle />
+        <span class="reading-focus-switch" aria-hidden="true"></span>
+      </label>
+
+      <label class="reading-focus-range" for="reading-focus-duration">
+        <span>{labels.duration}</span>
+        <span
+          ><output
+            for="reading-focus-duration"
+            data-reading-focus-duration-value>4</output
+          >
+          {labels.seconds}</span
+        >
+        <input
+          id="reading-focus-duration"
+          type="range"
+          min="2"
+          max="8"
+          step="1"
+          value="4"
+        />
+      </label>
+      <label class="reading-focus-range" for="reading-focus-offset">
+        <span>{labels.offset}</span>
+        <span
+          ><output for="reading-focus-offset" data-reading-focus-offset-value
+            >22</output
+          >%</span
+        >
+        <input
+          id="reading-focus-offset"
+          type="range"
+          min="10"
+          max="40"
+          step="1"
+          value="22"
+        />
+      </label>
+    </div>
+  </details>
+</div>

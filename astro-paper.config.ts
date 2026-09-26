@@ -33,6 +33,15 @@ export default defineAstroPaperConfig({
     showSidenotes: true,
     // 关闭文末列表后，上标仍可打开详情；打印和无 JS 时保留列表。
     showEndnotes: true,
+    // 阅读者可在文章页自行开关并切换样式；选择会保存在当前浏览器。
+    readingFocus: {
+      enabled: true,
+      defaultEnabled: true,
+      defaultStyle: "left",
+      highlightTocTarget: true,
+      highlightDuration: 4000,
+      headingOffsetPercent: 22,
+    },
     // 文章源在仓库根 posts/，与主题自带编辑链接不一致，先关闭
     editPost: { enabled: false },
     search: "pagefind",
