@@ -43,6 +43,11 @@
       @apply marker:text-accent;
     }
 
+    /* Unbroken footnote text must stay within the article column. */
+    section[data-footnotes] li {
+      overflow-wrap: anywhere;
+    }
+
     hr {
       @apply border-border;
     }
