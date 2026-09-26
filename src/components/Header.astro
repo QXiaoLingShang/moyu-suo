@@ -234,11 +234,11 @@ const isActive = (path: string) => {
       closeTimer = undefined;
     }
 
-    function setMenuOpen(
+    const setMenuOpen = (
       open: boolean,
       restoreFocus = true,
       immediate = false
-    ) {
+    ) => {
       if (open && desktopQuery.matches) return;
       if (open === isOpen && !(immediate && isScrollLocked)) return;
 
@@ -300,9 +300,9 @@ const isActive = (path: string) => {
           350
         );
       }
-    }
+    };
 
-    function syncBreakpoint() {
+    const syncBreakpoint = () => {
       if (desktopQuery.matches) {
         if (isOpen || isScrollLocked) setMenuOpen(false, false, true);
         menuItems.inert = false;
@@ -311,7 +311,7 @@ const isActive = (path: string) => {
         menuItems.inert = !isOpen;
         menuItems.setAttribute("aria-hidden", String(!isOpen));
       }
-    }
+    };
 
     function handleKeyDown(event: KeyboardEvent) {
       if (!isOpen) return;
