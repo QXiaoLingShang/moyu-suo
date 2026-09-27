@@ -132,6 +132,12 @@
     font-size: 0.8125rem;
     line-height: 1.6;
   }
+  .sidenote-excerpt .katex {
+    font-size: 1em;
+  }
+  .sidenote-math-compact {
+    white-space: nowrap;
+  }
   .sidenote-hint {
     flex-shrink: 0;
     color: var(--muted-foreground);

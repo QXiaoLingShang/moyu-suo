@@ -5,7 +5,6 @@ export type Note = {
   readonly number: number;
   readonly source: HTMLElement;
   readonly body: HTMLDivElement;
-  readonly excerpt: string;
   readonly refs: readonly HTMLAnchorElement[];
   readonly originalTabindex: string | null;
   lastRef?: HTMLAnchorElement;
@@ -23,18 +22,6 @@ export type NoteGroup = {
 /** DOM identity survives regrouping without conflating distant references to the same note. */
 export function referenceKey(reference: NoteReference): HTMLElement {
   return reference.ref ?? reference.note.source;
-}
-
-function plainText(node: Node): string {
-  // Controls are not note content; KaTeX's parallel MathML would repeat the formula.
-  if (
-    node instanceof Element &&
-    node.matches("[data-footnote-backref], button, .katex-mathml")
-  )
-    return "";
-  return node.nodeType === Node.TEXT_NODE
-    ? (node.textContent ?? "")
-    : Array.from(node.childNodes).map(plainText).join(" ");
 }
 
 export function collectNotes(
@@ -60,11 +47,6 @@ export function collectNotes(
       number: index + 1,
       source,
       body,
-      excerpt: plainText(body)
-        .replace(/[↩↵]/g, "")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 240),
       refs: referencesById.get(source.id) ?? [],
       originalTabindex,
     };

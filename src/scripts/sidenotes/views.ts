@@ -1,4 +1,5 @@
 import { getSidenoteChoices } from "@/utils/sidenoteSelection";
+import { createSidenoteExcerpt } from "./excerpt";
 import {
   noteLabel,
   referenceKey,
@@ -47,6 +48,7 @@ export function createPreviewViews(
   >();
   const configuredGroup = new WeakMap<NoteView, NoteGroup>();
   const optionButtons = new WeakMap<NoteView, HTMLButtonElement[]>();
+  const excerptTemplates = new WeakMap<Note, DocumentFragment>();
   const byCard = new WeakMap<HTMLElement, NoteView>();
   const byOption = new WeakMap<HTMLButtonElement, NoteReference>();
   const renderedChoices = new WeakMap<NoteView, readonly Note[]>();
@@ -67,8 +69,17 @@ export function createPreviewViews(
           ? `Reference ${occurrence} of ${note.refs.length}`
           : `正文第 ${occurrence} 处引用，共 ${note.refs.length} 处`
         : label;
-    view.excerpt.textContent =
-      note.excerpt || (english ? "Open to view content" : "打开查看内容");
+    let template = excerptTemplates.get(note);
+    if (!template) {
+      template = createSidenoteExcerpt(note.body);
+      excerptTemplates.set(note, template);
+    }
+    const excerpt = template.cloneNode(true);
+    if (excerpt.textContent?.trim()) view.excerpt.replaceChildren(excerpt);
+    else
+      view.excerpt.textContent = english
+        ? "Open to view content"
+        : "打开查看内容";
     view.preview.setAttribute(
       "aria-label",
       `${english ? "Read note" : "查看完整注解"} ${note.number}`
