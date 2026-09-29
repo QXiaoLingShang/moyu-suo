@@ -29,11 +29,12 @@ const t = useTranslations(locale);
   <Breadcrumb />
 
   <Main
-  pageTitle={t.pages.postsTitle}
-  pageDesc={t.pages.postsDesc}
-  pageTitleKey="pages.postsTitle"
-  pageDescKey="pages.postsDesc"
->
+    pageTitle={t.pages.postsTitle}
+    pageDesc={t.pages.postsDesc}
+    pageTitleKey="pages.postsTitle"
+    pageDescKey="pages.postsDesc"
+    transitionName="home-posts-heading"
+  >
     <ul>
       {page.data.map(data => <Card {...data} />)}
     </ul>

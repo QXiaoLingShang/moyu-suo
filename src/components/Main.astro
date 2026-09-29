@@ -9,6 +9,7 @@ type Props = {
   pageDescKey?: string;
   phraseTitle?: boolean;
   phraseDesc?: boolean;
+  transitionName?: string;
   class?: string;
 };
 
@@ -19,6 +20,7 @@ const {
   pageDescKey,
   phraseTitle,
   phraseDesc,
+  transitionName,
   class: className,
 } = Astro.props;
 
@@ -34,6 +36,7 @@ const backUrl = config.features.showBackButton
   class:list={["app-layout pb-4", className]}
 >
   <h1
+    transition:name={transitionName}
     class="text-2xl font-semibold sm:text-3xl"
     data-i18n={pageTitleKey || undefined}
     data-i18n-phrase={phraseTitle || undefined}

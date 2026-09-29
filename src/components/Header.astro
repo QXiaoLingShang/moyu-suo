@@ -13,6 +13,11 @@ import { stripBase, stripLocale } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
+type Props = {
+  wide?: boolean;
+};
+
+const { wide = false } = Astro.props;
 const { site, features } = config;
 
 const locale = Astro.currentLocale ?? config.site.lang;
@@ -38,13 +43,17 @@ const isActive = (path: string) => {
 <a
   id="skip-to-content"
   href="#main-content"
-  class="bg-background text-accent absolute inset-s-16 -top-full z-50 px-3 py-2 backdrop-blur-lg transition-all focus:top-4"
+  class="bg-background text-accent absolute inset-s-16 -top-full z-[70] px-3 py-2 backdrop-blur-lg transition-all focus:top-4"
 >
   {t.a11y.skipToContent}
 </a>
 
 <header
-  class="app-layout flex flex-col items-center justify-between sm:flex-row"
+  transition:name="site-header"
+  class:list={[
+    "app-layout relative z-50 flex flex-col items-center justify-between sm:flex-row",
+    { "site-header--wide": wide },
+  ]}
 >
   <div
     class="border-border bg-background relative flex w-full items-baseline justify-between border-b py-4 sm:items-center sm:py-6"
