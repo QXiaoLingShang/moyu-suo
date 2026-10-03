@@ -46,6 +46,47 @@ export class HomePointerHighlight {
   }
 
   setAnchors(target: HTMLElement, anchors: readonly PointerAnchor[]): void {
+    this.writeAnchorAttributes(target, anchors);
+    this.anchors.set(target, [...anchors]);
+    this.arrived.set(target, new Set());
+  }
+
+  updateAnchorDestinations(
+    target: HTMLElement,
+    destinations: readonly PointerGlyphDestination[]
+  ): PointerAnchor[] | null {
+    const anchors = this.anchors.get(target);
+    if (!anchors) return null;
+
+    const destinationsByGlyph = new Map(
+      destinations.map(destination => [destination.glyphIndex, destination])
+    );
+    const updatedAnchors = anchors.map(anchor => {
+      const destination = destinationsByGlyph.get(anchor.glyphIndex);
+      return destination
+        ? {
+            ...anchor,
+            glyph: destination.glyph,
+            point: destination.point,
+          }
+        : null;
+    });
+    const validAnchors = updatedAnchors.filter(
+      (anchor): anchor is PointerAnchor => anchor !== null
+    );
+    if (validAnchors.length !== anchors.length) return null;
+    this.writeAnchorAttributes(target, validAnchors);
+    this.anchors.set(target, validAnchors);
+    return validAnchors;
+  }
+
+  private writeAnchorAttributes(
+    target: HTMLElement,
+    anchors: readonly PointerAnchor[]
+  ): void {
+    this.targets.glyphs(target).forEach(glyph => {
+      glyph.removeAttribute("data-home-pointer-anchor");
+    });
     const assignments = new Map<HTMLElement, number[]>();
     anchors.forEach(anchor => {
       if (!anchor.glyph) return;
@@ -56,8 +97,6 @@ export class HomePointerHighlight {
     assignments.forEach((indexes, glyph) => {
       glyph.dataset.homePointerAnchor = indexes.join(",");
     });
-    this.anchors.set(target, [...anchors]);
-    this.arrived.set(target, new Set());
   }
 
   getAnchors(target: HTMLElement): PointerAnchor[] {

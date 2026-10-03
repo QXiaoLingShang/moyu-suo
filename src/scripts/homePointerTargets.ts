@@ -27,10 +27,12 @@ function splitGraphemes(value: string): string[] {
 
 export class HomePointerTargets {
   private entranceBounds = new Map<HTMLElement, PointerBounds>();
+  private targetBounds = new Map<HTMLElement, PointerBounds>();
   private entranceBoundsLoaded = false;
 
   invalidate(): void {
     this.entranceBounds.clear();
+    this.targetBounds.clear();
     this.entranceBoundsLoaded = false;
   }
 
@@ -86,16 +88,16 @@ export class HomePointerTargets {
 
   bounds(target: HTMLElement): PointerBounds {
     const entrance = target.closest<HTMLElement>(".home-entrance[data-key]");
-    const cachedBounds = entrance
-      ? this.entranceBounds.get(entrance)
-      : undefined;
+    const boundsOwner = entrance ?? target;
+    const boundsCache = entrance ? this.entranceBounds : this.targetBounds;
+    const cachedBounds = boundsCache.get(boundsOwner);
     if (cachedBounds) return cachedBounds;
 
     const glyphBounds = boundsFromRects(
       this.glyphs(target).map(glyph => glyph.getBoundingClientRect())
     );
     if (glyphBounds) {
-      if (entrance) this.entranceBounds.set(entrance, glyphBounds);
+      boundsCache.set(boundsOwner, glyphBounds);
       return glyphBounds;
     }
 
@@ -107,7 +109,7 @@ export class HomePointerTargets {
       right: rect.right,
       bottom: rect.bottom,
     };
-    if (entrance) this.entranceBounds.set(entrance, bounds);
+    boundsCache.set(boundsOwner, bounds);
     return bounds;
   }
 
@@ -156,7 +158,10 @@ export class HomePointerTargets {
     return closest;
   }
 
-  destinations(target: HTMLElement): PointerGlyphDestination[] {
+  destinations(
+    target: HTMLElement,
+    glyphIndexes?: ReadonlySet<number>
+  ): PointerGlyphDestination[] {
     const glyphs = this.prepare(target);
     if (glyphs.length === 0) {
       const rect = target.getBoundingClientRect();
@@ -172,13 +177,19 @@ export class HomePointerTargets {
       ];
     }
 
-    return glyphs.map((glyph, glyphIndex) => {
+    return glyphs.flatMap((glyph, glyphIndex) => {
+      if (glyphIndexes && !glyphIndexes.has(glyphIndex)) return [];
       const rect = glyph.getBoundingClientRect();
-      return {
-        glyph,
-        glyphIndex,
-        point: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
-      };
+      return [
+        {
+          glyph,
+          glyphIndex,
+          point: {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+          },
+        },
+      ];
     });
   }
 }

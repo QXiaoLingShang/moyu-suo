@@ -1,7 +1,7 @@
 import { HomePointerParticles } from "./homePointerParticles";
 import { HomePointerHighlight } from "./homePointerHighlight";
 import { HomePointerTargets } from "./homePointerTargets";
-import { createHomePointerMotion } from "./homePointerMotion";
+import { createHomePointerController } from "./homePointerController";
 
 function createPointerLayer(): {
   layer: HTMLDivElement;
@@ -32,7 +32,7 @@ export function setupHomePointer(): () => void {
   const targets = new HomePointerTargets();
   const highlight = new HomePointerHighlight(targets);
   const particles = new HomePointerParticles(layer);
-  const motion = createHomePointerMotion({
+  const motion = createHomePointerController({
     root,
     glow,
     pointer,

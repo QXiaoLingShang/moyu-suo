@@ -5,6 +5,7 @@ type TravelOptions = {
   duration: number;
   delay: number;
 };
+type ParticleOwner = object;
 type DurationForMotion = (
   anchorIndex: number,
   start: PointerPoint,
@@ -18,7 +19,7 @@ type ParticleMotionRequest = {
   getTarget: () => PointerPoint;
   options: TravelOptions;
   onComplete: (completion: ParticleCompletion) => void;
-  owner: HTMLElement;
+  owner: ParticleOwner;
   anchorIndex: number;
   glyph: HTMLElement | null;
   initialVelocity?: PointerPoint;
@@ -29,10 +30,10 @@ type ParticleTravelRequest = Omit<ParticleMotionRequest, "getTarget"> & {
 };
 
 type RetargetOwnerRequest = {
-  owner: HTMLElement;
+  owner: ParticleOwner;
   getTarget: (anchorIndex: number, glyph: HTMLElement | null) => PointerPoint;
   duration: DurationForMotion;
-  onComplete: (
+  onComplete?: (
     anchorIndex: number,
     glyph: HTMLElement | null,
     completion: ParticleCompletion
@@ -41,7 +42,7 @@ type RetargetOwnerRequest = {
 
 type ParticleMotion = {
   satellite: HTMLSpanElement;
-  owner: HTMLElement;
+  owner: ParticleOwner;
   anchorIndex: number;
   glyph: HTMLElement | null;
   position: PointerPoint;
@@ -141,12 +142,21 @@ export class HomePointerParticles {
       );
       motion.startOpacity = motion.opacity;
       motion.startScale = motion.scale;
-      motion.onComplete = completion =>
-        onComplete(motion.anchorIndex, motion.glyph, completion);
+      if (onComplete) {
+        motion.onComplete = completion =>
+          onComplete(motion.anchorIndex, motion.glyph, completion);
+      }
       this.requestMotionFrame(motion);
     });
 
     return new Set(motions.map(motion => motion.anchorIndex));
+  }
+
+  /** Remove a superseded target session without running its stale callbacks. */
+  cancelOwner(owner: ParticleOwner): void {
+    [...this.motions]
+      .filter(motion => motion.owner === owner)
+      .forEach(motion => this.removeMotion(motion));
   }
 
   private createMotion({
