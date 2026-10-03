@@ -2,7 +2,7 @@ import {
   intersectsSidenoteRange,
   type SidenoteCardBounds,
   type SidenoteReadingTarget,
-} from "./sidenoteGeometry";
+} from "./sidenoteGeometry.ts";
 
 type ViewportRange = { viewportStart: number; viewportEnd: number };
 type MeasuredGroup = { anchor: number; height: number };

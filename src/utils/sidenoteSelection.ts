@@ -85,4 +85,4 @@ export function getSidenoteChoices<T extends { note: unknown }>(
 import {
   intersectsSidenoteRange,
   type SidenoteReadingTarget,
-} from "./sidenoteGeometry";
+} from "./sidenoteGeometry.ts";
