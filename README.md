@@ -33,13 +33,13 @@
 
 ## 技术栈
 
-| 用途 | 技术 |
-| --- | --- |
-| 站点生成 | [Astro](https://astro.build/) |
-| 样式 | [Tailwind CSS](https://tailwindcss.com/) |
-| 文章格式 | Markdown / MDX |
-| 站内搜索 | [Pagefind](https://pagefind.app/) |
-| 部署 | GitHub Actions + GitHub Pages |
+| 用途     | 技术                                     |
+| -------- | ---------------------------------------- |
+| 站点生成 | [Astro](https://astro.build/)            |
+| 样式     | [Tailwind CSS](https://tailwindcss.com/) |
+| 文章格式 | Markdown / MDX                           |
+| 站内搜索 | [Pagefind](https://pagefind.app/)        |
+| 部署     | GitHub Actions + GitHub Pages            |
 
 ## 本地预览
 
@@ -67,14 +67,14 @@ pnpm preview  # 本地预览构建结果
 
 ## 仓库结构
 
-| 路径 | 内容 |
-| --- | --- |
-| [`posts/`](posts/) | 博客文章、文章插图和写作模板 |
-| [`src/`](src/) | 页面、组件、样式和站点功能 |
-| [`public/`](public/) | favicon、默认社交分享图等静态资源 |
-| [`astro-paper.config.ts`](astro-paper.config.ts) | 站点标题、作者、语言和功能配置 |
-| [`astro.config.ts`](astro.config.ts) | Astro 构建、Markdown 处理和部署路径配置 |
-| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | GitHub Pages 自动部署流程 |
+| 路径                                                           | 内容                                    |
+| -------------------------------------------------------------- | --------------------------------------- |
+| [`posts/`](posts/)                                             | 博客文章、文章插图和写作模板            |
+| [`src/`](src/)                                                 | 页面、组件、样式和站点功能              |
+| [`public/`](public/)                                           | favicon、默认社交分享图等静态资源       |
+| [`astro-paper.config.ts`](astro-paper.config.ts)               | 站点标题、作者、语言和功能配置          |
+| [`astro.config.ts`](astro.config.ts)                           | Astro 构建、Markdown 处理和部署路径配置 |
+| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | GitHub Pages 自动部署流程               |
 
 ## 致谢
 

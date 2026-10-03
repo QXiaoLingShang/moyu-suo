@@ -17,11 +17,9 @@ async function renderMermaid() {
 
   let blocks = attrBlocks;
   if (blocks.length === 0) {
-    blocks = (Array.from(
-      document.querySelectorAll("pre > code")
-    ) as HTMLElement[]).filter(code =>
-      sniff.test((code.textContent ?? "").trimStart())
-    );
+    blocks = (
+      Array.from(document.querySelectorAll("pre > code")) as HTMLElement[]
+    ).filter(code => sniff.test((code.textContent ?? "").trimStart()));
   }
   if (blocks.length === 0) return;
 
@@ -48,6 +46,8 @@ async function renderMermaid() {
       wrap.innerHTML = svg;
       pre.replaceWith(wrap);
     } catch (err) {
+      // Keep rendering failures visible while preserving the repository's no-console rule.
+      // eslint-disable-next-line no-console
       console.warn("[mermaid] render failed:", err);
     }
   }

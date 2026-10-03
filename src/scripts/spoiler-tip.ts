@@ -29,5 +29,5 @@ document.addEventListener(
       el.classList.remove("visible");
     }
   },
-  { passive: true },
+  { passive: true }
 );

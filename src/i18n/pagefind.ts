@@ -19,7 +19,8 @@ const zh: PagefindStrings = {
   total_zero_results: "无结果",
   total_one_result: "共 [COUNT] 条结果",
   total_many_results: "共 [COUNT] 条结果",
-  alt_search: "没有与 [SEARCH_TERM] 相关的结果，已改为显示 [DIFFERENT_TERM] 的结果",
+  alt_search:
+    "没有与 [SEARCH_TERM] 相关的结果，已改为显示 [DIFFERENT_TERM] 的结果",
   search_suggestion: "没有与 [SEARCH_TERM] 相关的结果，试试以下关键词：",
   searching: "正在搜索 [SEARCH_TERM]……",
   results_label: "搜索结果",
@@ -35,6 +36,8 @@ const zh: PagefindStrings = {
   loading: "加载中",
 };
 
-export function pagefindTranslations(lang: UILang): PagefindStrings | undefined {
+export function pagefindTranslations(
+  lang: UILang
+): PagefindStrings | undefined {
   return lang === "zh-CN" ? zh : undefined;
 }

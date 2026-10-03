@@ -29,14 +29,16 @@ const effectiveDate = modDatetime
   ? new Date(modDatetime)
   : new Date(pubDatetime);
 const pubDate = new Date(pubDatetime);
-const isModified = !Number.isNaN(effectiveDate.getTime()) &&
+const isModified =
+  !Number.isNaN(effectiveDate.getTime()) &&
   !Number.isNaN(pubDate.getTime()) &&
   effectiveDate.getTime() > pubDate.getTime();
 
 // 用真实时间 + IANA 时区渲染日期；语言走 Astro i18n 当前 locale
 // （data-i18n-date 供客户端切换语言时按同一规则重算）
 const tz = postTimezone ?? config.site.timezone;
-const lang = (Astro.currentLocale ?? config.site.lang) === "en" ? "en" : "zh-CN";
+const lang =
+  (Astro.currentLocale ?? config.site.lang) === "en" ? "en" : "zh-CN";
 const dateText = formatDate(effectiveDate, tz, lang);
 ---
 
