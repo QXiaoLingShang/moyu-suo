@@ -5,213 +5,338 @@ import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
 import Footer from "@/components/Footer.astro";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
+import { homeEntrances } from "@/data/homeEntrances";
+import {
+  HOME_ROW_SPACING_REM,
+  MAX_ORBIT_ENTRANCES,
+} from "@/utils/homeGeometry";
 import { getSortedPosts } from "@/utils/getSortedPosts";
 import { getPostUrl } from "@/utils/getPostPaths";
 import { getAssetPath } from "@/utils/withBase";
+import { formatShortDate } from "@/utils/formatDate";
+import { useTranslations } from "@/i18n";
 import config from "@/config";
 import "@/styles/home.css";
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const isChinese = locale.startsWith("zh");
+const t = useTranslations(locale);
+const homeCopy = {
+  zh: {
+    introOpen: "展开关于我的介绍",
+    introClose: "收起关于我的介绍",
+    introLabel: "关于我 · 展开",
+    introTitle: "你好，我是小铃殇。",
+    introText: "在平静的湖面上，打捞一些闪光的碎片。",
+    planned: "筹备中",
+  },
+  en: {
+    introOpen: "Show my introduction",
+    introClose: "Hide my introduction",
+    introLabel: "About me · open",
+    introTitle: "Hello, I'm Xiaolingshang.",
+    introText: "Gathering little glimmers from the quiet surface of the lake.",
+    planned: "Coming soon",
+  },
+} as const;
+const copy = isChinese ? homeCopy.zh : homeCopy.en;
 const posts = getSortedPosts(
   await getCollection("posts", ({ data }) => !data.draft)
 ).slice(0, config.posts.perIndex);
+const [featuredPost, ...secondaryPosts] = posts;
 const homePath = getRelativeLocaleUrl(locale, "");
 const postsPath = getRelativeLocaleUrl(locale, "posts");
+const entrances = homeEntrances
+  .filter(
+    entry =>
+      entry.visibility !== "hidden" &&
+      (entry.id !== "archives" || config.features.showArchives)
+  )
+  .map(entry => {
+    const title = isChinese ? entry.title.zh : entry.title.en;
+    return {
+      ...entry,
+      title,
+      titleZh: entry.title.zh,
+      titleEn: entry.title.en,
+      glyphs: Array.from(title),
+      description: isChinese ? entry.description.zh : entry.description.en,
+      descriptionZh: entry.description.zh,
+      descriptionEn: entry.description.en,
+      href:
+        entry.visibility === "live"
+          ? getRelativeLocaleUrl(locale, entry.route)
+          : undefined,
+    };
+  });
 
-// The three future destinations remain in the composition without pretending
-// that an empty collection is a usable page.
-const entrances = [
-  {
-    key: "posts",
-    title: isChinese ? "文章" : "Posts",
-    description: isChinese ? "写下此刻的想法" : "Thoughts in writing",
-    href: postsPath,
-  },
-  {
-    key: "projects",
-    title: isChinese ? "项目" : "Projects",
-    description: isChinese ? "一些有趣的尝试" : "Interesting attempts",
-  },
-  {
-    key: "about",
-    title: isChinese ? "关于" : "About",
-    description: isChinese ? "认识这里的我" : "Get to know me",
-    href: getRelativeLocaleUrl(locale, "about"),
-  },
-  {
-    key: "gallery",
-    title: isChinese ? "相册" : "Gallery",
-    description: isChinese ? "收集生活的片段" : "Pieces of life",
-  },
-  {
-    key: "archives",
-    title: isChinese ? "归档" : "Archives",
-    description: isChinese ? "按时间翻阅" : "Browse by time",
-    href: config.features.showArchives
-      ? getRelativeLocaleUrl(locale, "archives")
-      : undefined,
-  },
-  {
-    key: "friends",
-    title: isChinese ? "友链" : "Friends",
-    description: isChinese ? "遇见有趣的人" : "Interesting people",
-  },
-];
-
-const dateFormatter = new Intl.DateTimeFormat(isChinese ? "zh-CN" : "en-US", {
-  month: "short",
-  day: "numeric",
-  timeZone: config.site.timezone,
-});
+const homeStageStyle = `--home-row-spacing: ${HOME_ROW_SPACING_REM}rem`;
 ---
 
 <Layout>
-  <Header wide />
-
-  <main
-    id="main-content"
-    data-layout="index"
-    data-home-path={homePath}
-    class="home-page"
-  >
-    <section class="home-stage" aria-labelledby="home-title">
-      <img
-        class="home-stage__art"
-        src={getAssetPath("assets/home/corner-accents.webp")}
-        alt=""
-        width="1600"
-        height="900"
-        loading="eager"
-        decoding="async"
-      />
-      <div class="home-orbit home-orbit--outer" aria-hidden="true"></div>
-      <div class="home-orbit home-orbit--inner" aria-hidden="true"></div>
-
-      <div class="home-disc">
-        <img
-          class="home-disc__image"
-          src={getAssetPath("assets/home/portal-art.webp")}
-          alt=""
-          width="960"
-          height="960"
-          loading="eager"
-          decoding="async"
-        />
-        <div class="home-disc__content">
-          <h1 id="home-title">{config.site.title}</h1>
-          <span class="home-disc__rule" aria-hidden="true"></span>
-          <p>
-            {
-              isChinese
-                ? "在文字的涟漪里，打捞一些晴天"
-                : "Finding bright days in words"
-            }
-          </p>
+  <div class="home-shell">
+    <div
+      class="home-backdrop"
+      aria-hidden="true"
+      style={'--home-day-image: url("' +
+        getAssetPath("assets/home/lake-day-v6.webp") +
+        '"); --home-night-image: url("' +
+        getAssetPath("assets/home/lake-night-v2.webp") +
+        '");'}
+    >
+      <div class="home-backdrop__landscape">
+        <div class="home-backdrop__view">
+          <span class="home-backdrop__scene home-backdrop__scene--day"></span>
+          <span class="home-backdrop__scene home-backdrop__scene--night"></span>
+          <canvas
+            class="home-backdrop__halftone"
+            data-home-halftone
+            aria-hidden="true"></canvas>
+          <canvas class="home-backdrop__glints" data-home-glints></canvas>
         </div>
       </div>
+    </div>
+    <Header wide />
 
-      <nav
-        class="home-entrances"
-        aria-label={isChinese ? "探索本站" : "Explore the site"}
+    <main
+      id="main-content"
+      data-layout="index"
+      data-home-path={homePath}
+      class="home-page"
+    >
+      <section
+        class="home-stage"
+        aria-labelledby="home-title"
+        data-home-layout={entrances.length > MAX_ORBIT_ENTRANCES
+          ? "index"
+          : "orbit"}
+        style={homeStageStyle}
+        data-intro-label={copy.introLabel}
+        data-intro-label-zh={homeCopy.zh.introLabel}
+        data-intro-label-en={homeCopy.en.introLabel}
+        data-intro-title={copy.introTitle}
+        data-intro-title-zh={homeCopy.zh.introTitle}
+        data-intro-title-en={homeCopy.en.introTitle}
+        data-intro-text={copy.introText}
+        data-intro-text-zh={homeCopy.zh.introText}
+        data-intro-text-en={homeCopy.en.introText}
+        data-planned-label={copy.planned}
+        data-planned-label-zh={homeCopy.zh.planned}
+        data-planned-label-en={homeCopy.en.planned}
       >
-        <ul>
+        <h1 id="home-title" class="sr-only">{config.site.title}</h1>
+
+        <button
+          class="home-disc"
+          type="button"
+          aria-controls="home-detail"
+          aria-expanded="false"
+          aria-label={copy.introOpen}
+          data-label-open={copy.introOpen}
+          data-label-open-zh={homeCopy.zh.introOpen}
+          data-label-open-en={homeCopy.en.introOpen}
+          data-label-close={copy.introClose}
+          data-label-close-zh={homeCopy.zh.introClose}
+          data-label-close-en={homeCopy.en.introClose}
+        >
+          <img
+            src={getAssetPath("assets/home/avatar.webp")}
+            alt=""
+            width="512"
+            height="512"
+            loading="eager"
+            decoding="async"
+          />
+        </button>
+
+        <svg class="home-connectors" aria-hidden="true">
           {
             entrances.map(entry => (
-              <li
-                class:list={[
-                  "home-entrance",
-                  `home-entrance--${entry.key}`,
-                  { "home-entrance--waiting": !entry.href },
-                ]}
-              >
-                {entry.href ? (
-                  <a href={entry.href} class="home-entrance__content">
-                    <span
-                      class="home-entrance__title"
-                      transition:name={
-                        entry.key === "posts" ? "home-posts-heading" : undefined
-                      }
-                    >
-                      {entry.title}
-                    </span>
-                    <span class="home-entrance__description">
-                      {entry.description}
-                    </span>
-                  </a>
-                ) : (
-                  <span
-                    class="home-entrance__content"
-                    aria-label={`${entry.title}，${isChinese ? "尚未开放" : "coming soon"}`}
-                    title={isChinese ? "尚未开放" : "Coming soon"}
-                  >
-                    <span class="home-entrance__title">{entry.title}</span>
-                    <span class="home-entrance__description">
-                      {entry.description}
-                    </span>
-                  </span>
-                )}
-              </li>
+              <g data-key={entry.id}>
+                <path class="home-connectors__line" />
+                <path class="home-connectors__grain" />
+                <circle r="5" />
+              </g>
             ))
           }
-        </ul>
-      </nav>
-
-      <a class="home-stage__continue" href="#home-recent">
-        <span>{isChinese ? "向下继续" : "Continue below"}</span>
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
-          <path
-            d="m4 8 8 8 8-8"
-            stroke="currentColor"
-            stroke-width="1.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"></path>
         </svg>
-      </a>
-    </section>
 
-    <section
-      id="home-recent"
-      class="home-recent"
-      aria-labelledby="home-recent-title"
-    >
-      <div class="home-recent__heading">
-        <h2 id="home-recent-title">
-          {isChinese ? "最近写的" : "Recently written"}
-        </h2>
-        <a href={postsPath}>
-          <span>{isChinese ? "查看更多" : "View all"}</span>
-          <IconArrowRight aria-hidden="true" />
+        <nav
+          class="home-entrances"
+          aria-label={t.home.explore}
+          data-i18n-aria-label="home.explore"
+        >
+          <ul>
+            {
+              entrances.map((entry, index) => (
+                <li
+                  class:list={[
+                    "home-entrance",
+                    index % 2 === 0
+                      ? "home-entrance--left"
+                      : "home-entrance--right",
+                    { "home-entrance--waiting": !entry.href },
+                  ]}
+                  style={"--home-row: " + (Math.floor(index / 2) + 1)}
+                  data-key={entry.id}
+                  data-title={entry.title}
+                  data-title-zh={entry.titleZh}
+                  data-title-en={entry.titleEn}
+                  data-description={entry.description}
+                  data-description-zh={entry.descriptionZh}
+                  data-description-en={entry.descriptionEn}
+                  data-status={entry.href ? "live" : "planned"}
+                >
+                  {entry.href ? (
+                    <a href={entry.href} class="home-entrance__content">
+                      <span
+                        class="home-entrance__title"
+                        aria-hidden="true"
+                        transition:name={
+                          entry.id === "posts"
+                            ? "home-posts-heading"
+                            : undefined
+                        }
+                      >
+                        {entry.glyphs.map((glyph, glyphIndex) => (
+                          <span
+                            class="home-entrance__glyph"
+                            data-glyph-index={glyphIndex}
+                          >
+                            {glyph}
+                          </span>
+                        ))}
+                      </span>
+                      <span class="home-entrance__accessible-label sr-only">
+                        {entry.title}. {entry.description}
+                      </span>
+                    </a>
+                  ) : (
+                    <span class="home-entrance__content">
+                      <span class="home-entrance__title" aria-hidden="true">
+                        {entry.glyphs.map((glyph, glyphIndex) => (
+                          <span
+                            class="home-entrance__glyph"
+                            data-glyph-index={glyphIndex}
+                          >
+                            {glyph}
+                          </span>
+                        ))}
+                      </span>
+                      <span class="home-entrance__accessible-label sr-only">
+                        {entry.title}. {isChinese ? "筹备中。" : "Coming soon."}
+                        {entry.description}
+                      </span>
+                    </span>
+                  )}
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+
+        <div
+          id="home-detail"
+          class="home-detail"
+          aria-live="off"
+          data-kind="idle"
+        >
+          <span class="home-detail__eyebrow"></span>
+          <p class="home-detail__title"></p>
+          <p class="home-detail__text">{copy.introText}</p>
+        </div>
+
+        <a class="home-stage__continue" href="#home-recent">
+          <span data-i18n="home.continueBelow">
+            {isChinese ? "向下继续" : "Continue below"}
+          </span>
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+            <path
+              d="m4 8 8 8 8-8"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"></path>
+          </svg>
         </a>
-      </div>
-      <ul class="home-recent__list">
-        {
-          posts.map(({ id, filePath, data }) => (
-            <li>
-              <time datetime={data.pubDatetime.toISOString()}>
-                {dateFormatter.format(data.pubDatetime)}
-              </time>
-              <a href={getPostUrl(id, filePath, locale)}>{data.title}</a>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-  </main>
+      </section>
 
-  <Footer class="home-footer" />
+      <section
+        id="home-recent"
+        class="home-recent"
+        aria-labelledby="home-recent-title"
+      >
+        <div class="home-recent__heading">
+          <h2 id="home-recent-title">
+            <span data-i18n="home.recentlyWritten">
+              {isChinese ? "最近写的" : "Recently written"}
+            </span>
+          </h2>
+          <a href={postsPath}>
+            <span data-i18n="home.viewMore">
+              {isChinese ? "查看更多" : "View all"}
+            </span>
+            <IconArrowRight aria-hidden="true" />
+          </a>
+        </div>
+        <ul class="home-recent__list">
+          {
+            featuredPost && (
+              <li class="home-recent__feature">
+                <time
+                  datetime={featuredPost.data.pubDatetime.toISOString()}
+                  data-i18n-date
+                  data-i18n-date-format="short"
+                  data-tz={config.site.timezone}
+                >
+                  {formatShortDate(
+                    featuredPost.data.pubDatetime,
+                    config.site.timezone,
+                    isChinese ? "zh-CN" : "en"
+                  )}
+                </time>
+                <a
+                  class="home-recent__feature-link"
+                  href={getPostUrl(
+                    featuredPost.id,
+                    featuredPost.filePath,
+                    locale
+                  )}
+                >
+                  <span>{featuredPost.data.title}</span>
+                  <IconArrowRight aria-hidden="true" />
+                </a>
+              </li>
+            )
+          }
+          {
+            secondaryPosts.length > 0 && (
+              <li class="home-recent__secondary">
+                <ul>
+                  {secondaryPosts.map(({ id, filePath, data }) => (
+                    <li>
+                      <a href={getPostUrl(id, filePath, locale)}>
+                        <span>{data.title}</span>
+                        <IconArrowRight aria-hidden="true" />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            )
+          }
+        </ul>
+      </section>
+    </main>
+
+    <Footer class="home-footer" />
+  </div>
 </Layout>
 
 <script>
-  document.addEventListener("astro:page-load", () => {
-    const home = document.querySelector<HTMLElement>(
-      "#main-content[data-layout='index']"
-    );
-    if (home) {
-      sessionStorage.setItem(
-        "backUrl",
-        home.dataset.homePath ?? import.meta.env.BASE_URL
-      );
-    }
-  });
+  import { setupHomePortal } from "@/scripts/homePortal";
+  import { setupHomeAtmosphere } from "@/scripts/homeAtmosphere";
+
+  setupHomePortal();
+  setupHomeAtmosphere();
 </script>
