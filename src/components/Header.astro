@@ -1,16 +1,24 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
-import IconUnderline from "@/assets/icons/IconUnderline.svg";
+import IconHome from "@/assets/icons/IconHome.svg";
+import IconFileText from "@/assets/icons/IconFileText.svg";
+import IconHash from "@/assets/icons/IconHash.svg";
+import IconUser from "@/assets/icons/IconUser.svg";
 import IconMenuDeep from "@/assets/icons/IconMenuDeep.svg";
 import IconArchive from "@/assets/icons/IconArchive.svg";
 import IconSunHigh from "@/assets/icons/IconSunHigh.svg";
 import IconSearch from "@/assets/icons/IconSearch.svg";
 import IconMoon from "@/assets/icons/IconMoon.svg";
 import IconX from "@/assets/icons/IconX.svg";
-import LinkButton from "./LinkButton.astro";
 import LangSwitcher from "./LangSwitcher.astro";
 import { stripBase, stripLocale } from "@/utils/withBase";
 import { useTranslations } from "@/i18n";
+import {
+  BLOG_ROUTE_ROOTS,
+  blogNavigation,
+  globalNavigation,
+  type NavigationItem,
+} from "@/data/siteNavigation";
 import config from "@/config";
 
 type Props = {
@@ -22,6 +30,10 @@ const { site, features } = config;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
+const menuLabels = {
+  zh: useTranslations("zh-CN").a11y,
+  en: useTranslations("en").a11y,
+};
 
 // Strip the base prefix so isActive comparisons work regardless of deploy subdirectory.
 // e.g. with base "/blog": "/blog/posts/slug" → "/posts/slug"
@@ -33,11 +45,49 @@ const pathWithoutTrailingSlash =
 
 const currentPath = stripLocale(pathWithoutTrailingSlash, locale);
 
-const isActive = (path: string) => {
-  const currentPathArray = currentPath.split("/").filter(p => p.trim());
-  const pathArray = path.split("/").filter(p => p.trim());
-  return currentPath === path || currentPathArray[0] === pathArray[0];
+const normalizedCurrentPath =
+  currentPath === "/" ? "/" : currentPath.replace(/\/+$/, "");
+
+function isPathWithin(route: string): boolean {
+  if (!route) return normalizedCurrentPath === "/";
+  const target = `/${route}`;
+  return (
+    normalizedCurrentPath === target ||
+    normalizedCurrentPath.startsWith(`${target}/`)
+  );
+}
+
+const isBlogSection = BLOG_ROUTE_ROOTS.some(isPathWithin);
+
+function isActive(item: NavigationItem): boolean {
+  return item.id === "blog" ? isBlogSection : isPathWithin(item.route);
+}
+
+function currentness(item: NavigationItem): "page" | "location" | undefined {
+  if (!isActive(item)) return undefined;
+  return normalizedCurrentPath === (item.route ? `/${item.route}` : "/")
+    ? "page"
+    : "location";
+}
+
+const navigationIcons = {
+  home: IconHome,
+  posts: IconFileText,
+  about: IconUser,
+  tags: IconHash,
+  archives: IconArchive,
+  search: IconSearch,
 };
+
+const visibleBlogNavigation = blogNavigation.filter(item =>
+  item.id === "archives"
+    ? features.showArchives
+    : item.id === "search"
+      ? features.search !== false
+      : true
+);
+
+const navigationGroupLabels = t.navigationGroups;
 ---
 
 <a
@@ -53,6 +103,7 @@ const isActive = (path: string) => {
   class:list={[
     "app-layout relative z-50 flex flex-col items-center justify-between sm:flex-row",
     { "site-header--wide": wide },
+    { "site-header--compact": !wide },
   ]}
 >
   <div
@@ -70,319 +121,548 @@ const isActive = (path: string) => {
     >
       <button
         id="menu-btn"
-        class="focus-outline relative z-[60] self-end p-2 sm:hidden"
+        class="site-nav__trigger focus-outline relative z-[60] self-end p-2"
         aria-label={t.a11y.openMenu}
         aria-expanded="false"
         aria-controls="menu-items"
         data-label-open={t.a11y.openMenu}
         data-label-close={t.a11y.closeMenu}
+        data-label-open-zh={menuLabels.zh.openMenu}
+        data-label-open-en={menuLabels.en.openMenu}
+        data-label-close-zh={menuLabels.zh.closeMenu}
+        data-label-close-en={menuLabels.en.closeMenu}
+        data-i18n-aria-label="a11y.openMenu"
       >
-        <IconX id="close-icon" class="hidden" />
-        <IconMenuDeep id="menu-icon" />
+        <span class="site-nav__mobile-icon" aria-hidden="true">
+          <IconX id="close-icon" class="hidden" />
+          <IconMenuDeep id="menu-icon" />
+        </span>
       </button>
       <ul
         id="menu-items"
-        aria-hidden="true"
-        inert
         class:list={[
-          "border-border bg-background [&>li>a]:hover:text-accent [&>li>a]:border-border",
+          "site-nav__items border-border bg-background",
           "pointer-events-none fixed inset-x-0 top-[4.5rem] bottom-0 z-50 grid w-full grid-cols-6 content-start gap-x-2 gap-y-0 overflow-y-auto overscroll-contain px-8 pt-6 pb-24",
           "translate-y-2 opacity-0 transition-[opacity,transform] duration-250 motion-reduce:transition-none",
-          "sm:pointer-events-auto sm:static sm:inset-auto sm:mt-0 sm:flex sm:h-auto sm:w-auto sm:translate-y-0 sm:grid-cols-6 sm:content-normal sm:gap-x-5 sm:gap-y-0 sm:overflow-visible sm:overscroll-auto sm:border-0 sm:bg-transparent sm:p-0 sm:opacity-100 sm:transition-none sm:[&>li]:h-8",
-          "[&>li>a]:block [&>li>a]:border-b [&>li>a]:px-0 [&>li>a]:py-3 [&>li>a]:text-start [&>li>a]:text-sm [&>li>a]:leading-6 [&>li>a]:font-medium",
-          "sm:[&>li>a]:border-0 sm:[&>li>a]:px-2 sm:[&>li>a]:py-1 sm:[&>li>a]:text-center sm:[&>li>a]:text-base sm:[&>li>a]:leading-normal",
         ]}
       >
         <li
-          class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
+          class="site-nav__group site-nav__group--global col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
         >
-          <a
-            href={getRelativeLocaleUrl(locale, "posts")}
-            class:list={{ "active-nav": isActive("/posts") }}
-            data-i18n="nav.posts"
+          <div
+            class="site-nav__group-content"
+            role="group"
+            aria-label={navigationGroupLabels.global}
+            data-i18n-aria-label="navigationGroups.global"
           >
-            {t.nav.posts}
-          </a>
-        </li>
-        <li
-          class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
-        >
-          <a
-            href={getRelativeLocaleUrl(locale, "tags")}
-            class:list={{ "active-nav": isActive("/tags") }}
-            data-i18n="nav.tags"
-          >
-            {t.nav.tags}
-          </a>
-        </li>
-        <li
-          class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none"
-        >
-          <a
-            href={getRelativeLocaleUrl(locale, "about")}
-            class:list={{ "active-nav": isActive("/about") }}
-            data-i18n="nav.about"
-          >
-            {t.nav.about}
-          </a>
+            <span
+              class="site-nav__group-heading"
+              aria-hidden="true"
+              data-i18n="navigationGroups.global"
+            >
+              {navigationGroupLabels.global}
+            </span>
+            {
+              globalNavigation.map(item => {
+                const Icon = navigationIcons[item.icon];
+                const active = isActive(item);
+                const link = (
+                  <a
+                    href={getRelativeLocaleUrl(locale, item.route)}
+                    class:list={["site-nav__link", { "active-nav": active }]}
+                    data-nav-item
+                    data-active={active ? "true" : undefined}
+                    aria-current={currentness(item)}
+                    aria-label={t.nav[item.label]}
+                    data-i18n-aria-label={`nav.${item.label}`}
+                  >
+                    <Icon aria-hidden="true" class="size-5" />
+                    <span data-i18n={`nav.${item.label}`}>
+                      {t.nav[item.label]}
+                    </span>
+                  </a>
+                );
+
+                if (item.id !== "blog" || !isBlogSection) return link;
+
+                return (
+                  <div class="site-nav__global-entry">
+                    {link}
+                    <div class="site-nav__module-menu">
+                      <button
+                        type="button"
+                        class="site-nav__module-trigger"
+                        aria-label={t.a11y.switchBlogSection}
+                        aria-expanded="false"
+                        aria-controls="blog-sections-panel"
+                        data-i18n-aria-label="a11y.switchBlogSection"
+                      >
+                        <svg
+                          class="site-nav__chevron"
+                          viewBox="0 0 12 12"
+                          fill="none"
+                        >
+                          <path d="m2.25 4.5 3.75 3 3.75-3" />
+                        </svg>
+                      </button>
+                      <ul
+                        id="blog-sections-panel"
+                        class="site-nav__module-panel border-border bg-background"
+                        hidden
+                      >
+                        {visibleBlogNavigation.map(section => {
+                          const sectionActive = isActive(section);
+                          return (
+                            <li>
+                              <a
+                                href={getRelativeLocaleUrl(
+                                  locale,
+                                  section.route
+                                )}
+                                class:list={[
+                                  "site-nav__module-link",
+                                  { "active-nav": sectionActive },
+                                ]}
+                                aria-current={currentness(section)}
+                                aria-label={t.nav[section.label]}
+                                data-i18n={`nav.${section.label}`}
+                                data-i18n-aria-label={`nav.${section.label}`}
+                              >
+                                {t.nav[section.label]}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+                );
+              })
+            }
+          </div>
         </li>
         {
-          features.showArchives && (
-            <li class="col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none">
-              <LinkButton
-                href={getRelativeLocaleUrl(locale, "archives")}
-                class:list={[
-                  "focus-outline flex size-full justify-start py-3 sm:relative sm:size-8 sm:justify-center sm:p-0",
-                  { "active-nav": isActive("/archives") },
-                ]}
-                title={t.nav.archives}
-                aria-label={t.nav.archives}
-                data-i18n-title="nav.archives"
+          isBlogSection && (
+            <li class="site-nav__group site-nav__group--local col-span-6 mx-auto w-full max-w-72 sm:mx-0 sm:w-auto sm:max-w-none">
+              <div
+                class="site-nav__group-content"
+                role="group"
+                aria-label={navigationGroupLabels.local}
+                data-i18n-aria-label="navigationGroups.local"
               >
-                <IconArchive class="hidden sm:absolute sm:top-1/2 sm:left-1/2 sm:block sm:size-6 sm:-translate-x-1/2 sm:-translate-y-1/2" />
-                <span class="sm:sr-only" data-i18n="nav.archives">
-                  {t.nav.archives}
+                <span
+                  class="site-nav__group-heading"
+                  aria-hidden="true"
+                  data-i18n="navigationGroups.local"
+                >
+                  {navigationGroupLabels.local}
                 </span>
-                {isActive("/archives") && (
-                  <IconUnderline
-                    aria-hidden="true"
-                    class="scale-125 max-sm:hidden sm:absolute sm:bottom-0 sm:w-6"
-                  />
-                )}
-              </LinkButton>
+                {visibleBlogNavigation.map(item => {
+                  const Icon = navigationIcons[item.icon];
+                  const active = isActive(item);
+                  return (
+                    <a
+                      href={getRelativeLocaleUrl(locale, item.route)}
+                      class:list={["site-nav__link", { "active-nav": active }]}
+                      data-nav-item
+                      data-active={active ? "true" : undefined}
+                      aria-current={currentness(item)}
+                      aria-label={t.nav[item.label]}
+                      data-i18n-aria-label={`nav.${item.label}`}
+                    >
+                      <Icon aria-hidden="true" class="size-5" />
+                      <span data-i18n={`nav.${item.label}`}>
+                        {t.nav[item.label]}
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
             </li>
           )
         }
-        {
-          features.search !== false && (
-            <li class="col-span-2 mt-6 flex items-center justify-center sm:mt-0">
-              <LinkButton
-                href={getRelativeLocaleUrl(locale, "search")}
-                class:list={["focus-outline relative size-8"]}
-                title={t.nav.search}
-                aria-label={t.nav.search}
-                data-i18n-title="nav.search"
-              >
-                <IconSearch class="absolute top-1/2 left-1/2 size-6 -translate-x-1/2 -translate-y-1/2" />
-                <span class="sr-only" data-i18n="nav.search">
-                  {t.nav.search}
-                </span>
-                {isActive("/search") && (
-                  <IconUnderline
-                    aria-hidden="true"
-                    class="absolute bottom-0 w-6 scale-125 max-sm:inset-s-2"
-                  />
-                )}
-              </LinkButton>
-            </li>
-          )
-        }
-        {
-          features.lightAndDarkMode && (
-            <li class="col-span-2 mt-6 flex items-center justify-center sm:mt-0">
-              <button
-                id="theme-btn"
-                class="focus-outline hover:[&>svg]:stroke-accent relative size-12 p-4 sm:size-8"
-                title={t.a11y.toggleTheme}
-                aria-label="auto"
-                aria-live="polite"
-              >
-                <IconMoon class="absolute top-[50%] left-[50%] translate-[-50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-                <IconSunHigh class="absolute top-[50%] left-[50%] translate-[-50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-              </button>
-            </li>
-          )
-        }
-        <li class="col-span-2 mt-6 flex items-center justify-center sm:mt-0">
-          <LangSwitcher />
+        <li
+          class="site-nav__group site-nav__group--utilities col-span-6 mx-auto mt-6 w-full max-w-72 sm:mx-0 sm:mt-0 sm:w-auto sm:max-w-none"
+        >
+          <div
+            class="site-nav__group-content site-nav__group-content--utilities nav-utilities border-border flex w-full items-center justify-center gap-5 border-t pt-4 sm:w-auto sm:gap-2 sm:border-0 sm:pt-0"
+            role="group"
+            aria-label={navigationGroupLabels.utilities}
+            data-i18n-aria-label="navigationGroups.utilities"
+          >
+            {
+              features.lightAndDarkMode && (
+                <button
+                  id="theme-btn"
+                  class="focus-outline hover:[&>svg]:stroke-accent relative size-10 p-3 sm:size-8 sm:p-2"
+                  title={t.a11y.toggleTheme}
+                  aria-label="auto"
+                  aria-live="polite"
+                >
+                  <IconMoon class="absolute top-[50%] left-[50%] translate-[-50%] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+                  <IconSunHigh class="absolute top-[50%] left-[50%] translate-[-50%] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+                </button>
+              )
+            }
+            <LangSwitcher />
+          </div>
         </li>
       </ul>
     </nav>
   </div>
+
+  <style>
+    #nav-menu {
+      position: relative;
+    }
+
+    #menu-items {
+      gap: 0;
+    }
+
+    .site-nav__trigger {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--foreground);
+    }
+
+    .site-nav__mobile-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .site-nav__mobile-icon svg {
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .site-nav__group {
+      min-width: 0;
+    }
+
+    .site-nav__group-content {
+      min-width: 0;
+    }
+
+    .site-nav__group-heading {
+      display: none;
+    }
+
+    .site-nav__group-content > a,
+    .site-nav__global-entry > a {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.75rem;
+      padding-block: 0.75rem;
+      border-bottom: 1px solid
+        color-mix(in srgb, var(--foreground) 12%, transparent);
+      color: var(--foreground);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      line-height: 1.5rem;
+      text-align: start;
+      transition:
+        color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+        text-shadow 220ms ease;
+    }
+
+    .site-nav__global-entry {
+      position: relative;
+      min-width: 0;
+    }
+
+    .site-nav__module-menu {
+      display: none;
+    }
+
+    .site-nav__group-content > a:not([data-active="true"]) {
+      text-decoration: none;
+    }
+
+    .site-nav__group-content > a:last-of-type {
+      border-bottom: 0;
+    }
+
+    .site-nav__group-content > a > span,
+    .site-nav__global-entry > a > span {
+      position: relative;
+      z-index: 1;
+    }
+
+    .site-nav__group--local {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid
+        color-mix(in srgb, var(--foreground) 18%, transparent);
+    }
+
+    .site-nav__group-content > a[data-active="true"] {
+      color: var(--accent);
+    }
+
+    .site-nav__group-content > a:hover,
+    .site-nav__group-content > a:focus-visible,
+    .site-nav__global-entry > a[data-active="true"],
+    .site-nav__global-entry > a:hover,
+    .site-nav__global-entry > a:focus-visible {
+      color: var(--accent);
+    }
+
+    .site-nav__group-content > a svg {
+      flex: 0 0 auto;
+    }
+
+    @media (min-width: 40rem) {
+      #nav-menu {
+        width: auto;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .site-nav__group {
+        width: auto;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+
+      .site-nav__group-content {
+        display: flex;
+        width: auto;
+        max-width: none;
+        align-items: center;
+        gap: 0.25rem;
+      }
+
+      .site-nav__group-content > a,
+      .site-nav__global-entry > a {
+        width: auto;
+        min-height: 2rem;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.375rem 0.5rem;
+        border: 0;
+        border-radius: 0.25rem;
+        font-size: 0.9375rem;
+        line-height: 1.25rem;
+        text-align: center;
+      }
+
+      #menu-btn {
+        display: none;
+      }
+
+      #menu-items {
+        position: static;
+        display: flex;
+        width: auto;
+        max-height: none;
+        grid-template-columns: none;
+        align-items: center;
+        gap: 0.75rem;
+        overflow: visible;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+        translate: none;
+        transition: none;
+        visibility: visible;
+      }
+
+      .site-nav__group--global .site-nav__group-content > a > svg,
+      .site-nav__global-entry > a > svg {
+        display: none;
+      }
+
+      .site-nav__group--local {
+        display: none;
+      }
+
+      .site-nav__group-content--utilities {
+        justify-content: center;
+        gap: 0.25rem;
+        margin-inline-start: 0.25rem;
+        padding-inline-start: 0.5rem;
+        border-inline-start: 1px solid
+          color-mix(in srgb, var(--foreground) 24%, transparent);
+      }
+
+      .site-nav__group-content--utilities > :global([data-lang-switcher]) {
+        margin-inline-start: 0.125rem;
+      }
+
+      .site-nav__chevron {
+        width: 0.75rem;
+        height: 0.75rem;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: transform 180ms ease;
+      }
+
+      .site-nav__global-entry {
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .site-nav__module-menu {
+        position: absolute;
+        inset-block-start: 50%;
+        inset-inline-start: calc(100% - 0.5rem);
+        display: inline-flex;
+        width: 1rem;
+        height: 2rem;
+        align-items: center;
+        transform: translateY(-50%);
+      }
+
+      .site-nav__module-trigger {
+        display: inline-flex;
+        width: 1rem;
+        height: 2rem;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: var(--muted-foreground);
+        cursor: pointer;
+        transition: color 180ms ease;
+      }
+
+      .site-nav__module-trigger:hover,
+      .site-nav__module-menu[data-open="true"] > .site-nav__module-trigger,
+      .site-nav__module-trigger:focus-visible {
+        color: var(--accent);
+      }
+
+      .site-nav__module-trigger:focus-visible {
+        outline: 2px dashed var(--accent);
+        outline-offset: 2px;
+      }
+
+      .site-nav__module-trigger .site-nav__chevron {
+        width: 0.625rem;
+        height: 0.625rem;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        transition: transform 180ms ease;
+      }
+
+      .site-nav__module-menu[data-open="true"]
+        > .site-nav__module-trigger
+        .site-nav__chevron {
+        transform: rotate(180deg);
+      }
+
+      .site-nav__module-panel {
+        position: absolute;
+        inset-block-start: calc(100% + 0.375rem);
+        inset-inline-end: 0;
+        z-index: 70;
+        display: grid;
+        min-width: 8rem;
+        margin: 0;
+        gap: 0;
+        padding: 0.25rem;
+        list-style: none;
+        border: 1px solid color-mix(in srgb, var(--foreground) 13%, transparent);
+        border-radius: 0.5rem;
+        background: var(--background);
+        box-shadow: 0 0.5rem 1.25rem rgb(0 0 0 / 12%);
+      }
+
+      .site-nav__module-panel[hidden] {
+        display: none;
+      }
+
+      .site-nav__module-link {
+        display: flex;
+        min-height: 2.25rem;
+        align-items: center;
+        padding: 0.5rem 0.625rem;
+        border-radius: 0.375rem;
+        color: var(--foreground);
+        text-decoration: none;
+        transition:
+          color 160ms ease,
+          background-color 160ms ease;
+      }
+
+      .site-nav__module-link:hover,
+      .site-nav__module-link:focus-visible,
+      .site-nav__module-link[aria-current="page"] {
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+    }
+
+    /* Keep generated navigation usable if the client controller never starts. */
+    #nav-menu:not([data-enhanced]) #menu-btn {
+      display: none;
+    }
+
+    #nav-menu:not([data-enhanced]) #menu-items {
+      position: static;
+      display: grid;
+      width: 100%;
+      max-height: none;
+      grid-template-columns: 1fr;
+      overflow: visible;
+      padding: 1rem 2rem;
+      border: 0;
+      background: transparent;
+      opacity: 1;
+      pointer-events: auto;
+      transform: none;
+      translate: none;
+      transition: none;
+      visibility: visible;
+    }
+
+    #nav-menu:not([data-enhanced]) .site-nav__module-menu {
+      display: none;
+    }
+
+    #nav-menu:not([data-enhanced]) .site-nav__group--local {
+      display: block;
+    }
+
+    @media (min-width: 40rem) {
+      #nav-menu:not([data-enhanced]) #menu-items {
+        display: flex;
+        width: auto;
+        grid-template-columns: none;
+        overflow: visible;
+        padding: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .site-nav__module-trigger,
+      .site-nav__module-trigger .site-nav__chevron,
+      .site-nav__module-link {
+        transition: none;
+      }
+    }
+  </style>
+
+  <script>
+    import { setupSiteHeader } from "@/scripts/siteHeader";
+
+    setupSiteHeader();
+  </script>
 </header>
-
-<script>
-  function toggleNav() {
-    const menuBtn = document.querySelector<HTMLButtonElement>("#menu-btn");
-    const menuItems = document.querySelector<HTMLUListElement>("#menu-items");
-    const menuIcon = document.querySelector("#menu-icon");
-    const closeIcon = document.querySelector("#close-icon");
-
-    if (!menuBtn || !menuItems || !menuIcon || !closeIcon) return;
-
-    const openLabel = menuBtn.dataset.labelOpen ?? "Open menu";
-    const closeLabel = menuBtn.dataset.labelClose ?? "Close menu";
-    const desktopQuery = window.matchMedia("(min-width: 40rem)");
-    let isOpen = false;
-    let isScrollLocked = false;
-    let previousRootOverflowY = "";
-    let previousBodyOverflow = "";
-    let closeTimer: number | undefined;
-    let transitionId = 0;
-
-    function lockPageScroll() {
-      if (!isScrollLocked) {
-        previousRootOverflowY = document.documentElement.style.overflowY;
-        previousBodyOverflow = document.body.style.overflow;
-        isScrollLocked = true;
-      }
-      document.documentElement.style.overflowY = "hidden";
-      document.body.style.overflow = "hidden";
-    }
-
-    function unlockPageScroll() {
-      if (!isScrollLocked) return;
-      document.documentElement.style.overflowY = previousRootOverflowY;
-      document.body.style.overflow = previousBodyOverflow;
-      isScrollLocked = false;
-    }
-
-    function finishClosing(expectedTransitionId: number) {
-      if (isOpen || expectedTransitionId !== transitionId) return;
-      unlockPageScroll();
-      closeTimer = undefined;
-    }
-
-    const setMenuOpen = (
-      open: boolean,
-      restoreFocus = true,
-      immediate = false
-    ) => {
-      if (open && desktopQuery.matches) return;
-      if (open === isOpen && !(immediate && isScrollLocked)) return;
-
-      isOpen = open;
-      menuBtn.setAttribute("aria-expanded", String(open));
-      menuBtn.setAttribute("aria-label", open ? closeLabel : openLabel);
-      menuIcon.classList.toggle("hidden", open);
-      closeIcon.classList.toggle("hidden", !open);
-
-      if (open) {
-        if (closeTimer !== undefined) {
-          window.clearTimeout(closeTimer);
-          closeTimer = undefined;
-        }
-        transitionId += 1;
-        lockPageScroll();
-        menuItems.inert = false;
-        menuItems.setAttribute("aria-hidden", "false");
-        menuItems.classList.remove(
-          "opacity-0",
-          "translate-y-2",
-          "pointer-events-none"
-        );
-        menuItems.classList.add(
-          "opacity-100",
-          "translate-y-0",
-          "pointer-events-auto"
-        );
-        menuItems
-          .querySelector<HTMLElement>("a[href], button:not(:disabled)")
-          ?.focus();
-        return;
-      }
-
-      menuItems.inert = true;
-      menuItems.setAttribute("aria-hidden", "true");
-      menuItems.classList.remove(
-        "opacity-100",
-        "translate-y-0",
-        "pointer-events-auto"
-      );
-      menuItems.classList.add(
-        "opacity-0",
-        "translate-y-2",
-        "pointer-events-none"
-      );
-      if (restoreFocus && menuBtn.isConnected) menuBtn.focus();
-
-      if (closeTimer !== undefined) window.clearTimeout(closeTimer);
-      const closingTransitionId = ++transitionId;
-      if (
-        immediate ||
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ) {
-        finishClosing(closingTransitionId);
-      } else {
-        closeTimer = window.setTimeout(
-          () => finishClosing(closingTransitionId),
-          350
-        );
-      }
-    };
-
-    const syncBreakpoint = () => {
-      if (desktopQuery.matches) {
-        if (isOpen || isScrollLocked) setMenuOpen(false, false, true);
-        menuItems.inert = false;
-        menuItems.setAttribute("aria-hidden", "false");
-      } else {
-        menuItems.inert = !isOpen;
-        menuItems.setAttribute("aria-hidden", String(!isOpen));
-      }
-    };
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (!isOpen) return;
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMenuOpen(false);
-      }
-    }
-
-    menuBtn.addEventListener("click", () => setMenuOpen(!isOpen));
-    menuItems.addEventListener("click", event => {
-      if (event.target instanceof Element && event.target.closest("a[href]")) {
-        setMenuOpen(false, false);
-      }
-    });
-
-    function cleanupBeforeSwap() {
-      if (isOpen || isScrollLocked) setMenuOpen(false, false, true);
-      document.removeEventListener("keydown", handleKeyDown);
-      desktopQuery.removeEventListener("change", syncBreakpoint);
-    }
-
-    syncBreakpoint();
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("astro:before-swap", cleanupBeforeSwap, {
-      once: true,
-    });
-    desktopQuery.addEventListener("change", syncBreakpoint);
-  }
-
-  function handleSkipToContent() {
-    const skipLink = document.getElementById("skip-to-content");
-    if (!skipLink) return;
-    skipLink.addEventListener("click", e => {
-      if (
-        e.defaultPrevented ||
-        e.metaKey ||
-        e.ctrlKey ||
-        e.shiftKey ||
-        e.button !== 0
-      )
-        return;
-      e.preventDefault();
-      const target = document.getElementById("main-content");
-      if (target) {
-        target.setAttribute("tabindex", "-1");
-        target.addEventListener(
-          "blur",
-          () => target.removeAttribute("tabindex"),
-          {
-            once: true,
-          }
-        );
-        target.focus();
-        target.scrollIntoView({ behavior: "smooth" });
-      }
-    });
-  }
-
-  toggleNav();
-  document.addEventListener("astro:after-swap", toggleNav);
-
-  handleSkipToContent();
-  document.addEventListener("astro:after-swap", handleSkipToContent);
-</script>

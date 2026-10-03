@@ -10,7 +10,7 @@
  */
 import en from "./lang/en";
 import zhCN from "./lang/zh-CN";
-import { formatDate } from "@/utils/formatDate";
+import { formatDate, formatShortDate } from "@/utils/formatDate";
 import type { UILang } from "@/utils/formatDate";
 
 export type LangCode = "zh-CN" | "en";
@@ -21,11 +21,6 @@ const DICTS: Record<LangCode, typeof en> = {
   "zh-CN": zhCN,
   en,
 };
-
-/** 目标语言的母语自称，用于 title / aria-label（语言无关，两语用户都懂） */
-function titleOf(current: LangCode): string {
-  return current === "zh-CN" ? "English" : "中文";
-}
 
 export const OTHER: Record<LangCode, LangCode> = {
   "zh-CN": "en",
@@ -46,26 +41,48 @@ function getByPath(obj: unknown, path: string): string {
   return typeof cur === "string" ? cur : "";
 }
 
-function collectLeafValues(dict: object): string[] {
-  const out: string[] = [];
-  const walk = (node: object) => {
-    for (const v of Object.values(node)) {
-      if (typeof v === "string") out.push(v);
-      else if (v && typeof v === "object") walk(v);
+type PhrasePair = { path: string; f: string; t: string };
+
+function collectLeafEntries(dict: object): Map<string, string> {
+  const entries = new Map<string, string>();
+  const walk = (node: object, parentPath = "") => {
+    for (const [key, value] of Object.entries(node)) {
+      const path = parentPath ? `${parentPath}.${key}` : key;
+      if (typeof value === "string") entries.set(path, value);
+      else if (value && typeof value === "object") walk(value, path);
     }
   };
   walk(dict);
-  return out;
+  return entries;
+}
+
+function getPhrasePairs(
+  from: LangCode,
+  to: LangCode,
+  preferredPath?: string
+): PhrasePair[] {
+  const source = collectLeafEntries(DICTS[from]);
+  const target = collectLeafEntries(DICTS[to]);
+  return [...source.entries()]
+    .flatMap(([path, f]) => {
+      const t = target.get(path);
+      return t && f !== t ? [{ path, f, t }] : [];
+    })
+    .sort((a, b) => {
+      const lengthOrder = b.f.length - a.f.length;
+      if (lengthOrder !== 0) return lengthOrder;
+      if (a.path === preferredPath) return -1;
+      if (b.path === preferredPath) return 1;
+      return 0;
+    });
 }
 
 /** 文档标题短语替换：源语言叶子值（长→短）→ 目标语言叶子值 */
 function swapDocumentTitle(from: LangCode, to: LangCode) {
-  const fromValues = collectLeafValues(DICTS[from]);
-  const toValues = collectLeafValues(DICTS[to]);
-  const pairs = fromValues
-    .map((f, i) => ({ f, t: toValues[i] }))
-    .filter(p => p.f && p.t && p.f !== p.t)
-    .sort((a, b) => b.f.length - a.f.length);
+  const preferredPath = document
+    .querySelector("title")
+    ?.getAttribute("data-i18n-phrase-key");
+  const pairs = getPhrasePairs(from, to, preferredPath || undefined);
   let title = document.title;
   for (const { f, t } of pairs) {
     if (title.includes(f)) title = title.split(f).join(t);
@@ -129,17 +146,25 @@ export function applyLang(target: LangCode) {
     el.setAttribute("aria-label", value);
   });
 
-  const fromCode: LangCode = target === "en" ? "zh-CN" : "en";
-  const fromValues = collectLeafValues(DICTS[fromCode]);
-  const toValues = collectLeafValues(DICTS[target]);
-  const pairs = fromValues
-    .map((f, i) => ({ f, t: toValues[i] }))
-    .filter(p => p.f && p.t && p.f !== p.t)
-    .sort((a, b) => b.f.length - a.f.length);
-
   document
-    .querySelectorAll<HTMLElement>("[data-i18n-phrase]")
-    .forEach(el => phraseReplace(el, pairs));
+    .querySelectorAll<HTMLElement>("[data-i18n-aria-label]")
+    .forEach(el => {
+      const key = el.getAttribute("data-i18n-aria-label");
+      if (!key) return;
+      const value = getByPath(dict, key);
+      if (value) el.setAttribute("aria-label", value);
+    });
+
+  const fromCode: LangCode = target === "en" ? "zh-CN" : "en";
+  const pairs = getPhrasePairs(fromCode, target);
+
+  document.querySelectorAll<HTMLElement>("[data-i18n-phrase]").forEach(el => {
+    const preferredPath = el.dataset.i18nPhraseKey;
+    phraseReplace(
+      el,
+      preferredPath ? getPhrasePairs(fromCode, target, preferredPath) : pairs
+    );
+  });
 
   // 日期：按目标语言与元素自带时区重算（与 SSR 同规则，见 utils/formatDate）
   document.querySelectorAll<HTMLElement>("[data-i18n-date]").forEach(el => {
@@ -148,7 +173,10 @@ export function applyLang(target: LangCode) {
     if (!iso || !tz) return;
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return;
-    el.textContent = formatDate(d, tz, target as UILang);
+    el.textContent =
+      el.dataset.i18nDateFormat === "short"
+        ? formatShortDate(d, tz, target as UILang)
+        : formatDate(d, tz, target as UILang);
   });
 
   document.documentElement.lang = target === "en" ? "en" : "zh-CN";
@@ -158,23 +186,28 @@ export function applyLang(target: LangCode) {
 }
 
 export function setLang(target: LangCode) {
-  if (target !== currentLang) applyLang(target);
+  const changed = target !== currentLang;
+  if (changed) applyLang(target);
   try {
     localStorage.setItem(STORAGE_KEY, target);
   } catch {
     /* 隐私模式等场景忽略 */
   }
-  const button = document.querySelector<HTMLElement>("[data-lang-btn]");
-  if (button) {
-    const label = button.querySelector("[data-lang-label]");
-    if (label) label.textContent = target === "zh-CN" ? "EN" : "中";
-    const t = titleOf(target);
-    button.title = t;
-    button.setAttribute("aria-label", t);
-  }
+  const switcher = document.querySelector<HTMLElement>("[data-lang-switcher]");
+  const currentLabel = switcher?.querySelector<HTMLElement>(
+    "[data-lang-current]"
+  );
+  if (currentLabel) currentLabel.textContent = target === "zh-CN" ? "中" : "EN";
+  switcher
+    ?.querySelectorAll<HTMLButtonElement>("[data-lang-option]")
+    .forEach(option => {
+      const selected = option.dataset.langOption === target;
+      option.dataset.selected = String(selected);
+      option.setAttribute("aria-pressed", String(selected));
+    });
 
   // Pagefind 无运行时 i18n：搜索页切换语言后重载一次以按新语言重建 UI
-  if (document.querySelector(".pagefind-ui")) {
+  if (changed && document.querySelector(".pagefind-ui")) {
     window.location.reload();
   }
 }
@@ -187,13 +220,97 @@ export function toggleLang() {
 export function restoreLang() {
   const stored = readStored();
   applyLang(stored);
-  // 让按钮文字与状态一致（即使无需换文案）
+  // Apply also updates the visible selected language and its pressed state.
   setLang(stored);
 }
 
+let langSwitcherEvents: AbortController | undefined;
+
 export function setupLangSwitcher() {
   restoreLang();
-  document.querySelector("[data-lang-btn]")?.addEventListener("click", () => {
-    toggleLang();
-  });
+  langSwitcherEvents?.abort();
+
+  const switcher = document.querySelector<HTMLElement>("[data-lang-switcher]");
+  const toggle =
+    switcher?.querySelector<HTMLButtonElement>("[data-lang-toggle]");
+  const menu = switcher?.querySelector<HTMLElement>("[data-lang-menu]");
+  if (!switcher || !toggle || !menu) return;
+
+  const activeSwitcher = switcher;
+  const toggleButton = toggle;
+  const optionMenu = menu;
+  const controller = new AbortController();
+  const { signal } = controller;
+  langSwitcherEvents = controller;
+
+  function setMenuOpen(open: boolean, restoreFocus = false) {
+    activeSwitcher.dataset.open = String(open);
+    toggleButton.setAttribute("aria-expanded", String(open));
+    optionMenu.hidden = !open;
+    if (!open && restoreFocus) toggleButton.focus({ preventScroll: true });
+  }
+
+  toggleButton.addEventListener(
+    "click",
+    () => {
+      setMenuOpen(toggleButton.getAttribute("aria-expanded") !== "true");
+    },
+    { signal }
+  );
+
+  activeSwitcher.addEventListener(
+    "click",
+    event => {
+      const target = event.target;
+      const option =
+        target instanceof Element
+          ? target.closest<HTMLButtonElement>("[data-lang-option]")
+          : null;
+      const language = option?.dataset.langOption;
+      if (
+        !option ||
+        !activeSwitcher.contains(option) ||
+        (language !== "zh-CN" && language !== "en")
+      )
+        return;
+
+      setLang(language);
+      setMenuOpen(false, true);
+    },
+    { signal }
+  );
+
+  document.addEventListener(
+    "pointerdown",
+    event => {
+      if (
+        activeSwitcher.dataset.open === "true" &&
+        event.target instanceof Node &&
+        !activeSwitcher.contains(event.target)
+      )
+        setMenuOpen(false);
+    },
+    { signal }
+  );
+
+  document.addEventListener(
+    "keydown",
+    event => {
+      if (event.key !== "Escape" || activeSwitcher.dataset.open !== "true")
+        return;
+      event.preventDefault();
+      setMenuOpen(false, true);
+    },
+    { signal }
+  );
+
+  document.addEventListener(
+    "astro:before-swap",
+    () => {
+      setMenuOpen(false);
+      controller.abort();
+      if (langSwitcherEvents === controller) langSwitcherEvents = undefined;
+    },
+    { once: true }
+  );
 }

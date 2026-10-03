@@ -9,6 +9,11 @@ export default {
     archives: "Archives",
     search: "Search",
   },
+  navigationGroups: {
+    global: "Site sections",
+    local: "Blog sections",
+    utilities: "Display options",
+  },
   post: {
     publishedAt: "Published at",
     updatedAt: "Updated",
@@ -33,6 +38,10 @@ export default {
     featured: "Featured",
     recentPosts: "Recent Posts",
     allPosts: "All Posts",
+    recentlyWritten: "Recently written",
+    viewMore: "View all",
+    explore: "Explore the site",
+    continueBelow: "Continue below",
   },
   footer: {
     copyright: "Copyright",
@@ -59,6 +68,7 @@ export default {
     openMenu: "Open menu",
     closeMenu: "Close menu",
     toggleTheme: "Toggle theme",
+    switchBlogSection: "Switch blog section",
     searchPlaceholder: "Search posts...",
     noResults: "No results found",
     goToPreviousPage: "Go to previous page",

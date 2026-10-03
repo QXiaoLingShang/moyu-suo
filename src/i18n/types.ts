@@ -7,6 +7,11 @@ export interface UIStrings {
     archives: string;
     search: string;
   };
+  navigationGroups: {
+    global: string;
+    local: string;
+    utilities: string;
+  };
   post: {
     publishedAt: string;
     updatedAt: string;
@@ -31,6 +36,10 @@ export interface UIStrings {
     featured: string;
     recentPosts: string;
     allPosts: string;
+    recentlyWritten: string;
+    viewMore: string;
+    explore: string;
+    continueBelow: string;
   };
   footer: {
     copyright: string;
@@ -57,6 +66,7 @@ export interface UIStrings {
     openMenu: string;
     closeMenu: string;
     toggleTheme: string;
+    switchBlogSection: string;
     searchPlaceholder: string;
     noResults: string;
     goToPreviousPage: string;

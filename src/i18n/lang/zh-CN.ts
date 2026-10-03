@@ -9,6 +9,11 @@ export default {
     archives: "归档",
     search: "搜索",
   },
+  navigationGroups: {
+    global: "全站",
+    local: "文章",
+    utilities: "显示选项",
+  },
   post: {
     publishedAt: "发布于",
     updatedAt: "更新于",
@@ -33,6 +38,10 @@ export default {
     featured: "精选",
     recentPosts: "近期文章",
     allPosts: "全部文章",
+    recentlyWritten: "最近写的",
+    viewMore: "查看更多",
+    explore: "探索本站",
+    continueBelow: "向下继续",
   },
   footer: {
     copyright: "版权所有",
@@ -59,6 +68,7 @@ export default {
     openMenu: "打开菜单",
     closeMenu: "关闭菜单",
     toggleTheme: "切换主题",
+    switchBlogSection: "切换文章栏目",
     searchPlaceholder: "搜索文章……",
     noResults: "未找到结果",
     goToPreviousPage: "前往上一页",

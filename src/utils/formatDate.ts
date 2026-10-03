@@ -9,11 +9,23 @@ const DATE_OPTIONS: Record<UILang, Intl.DateTimeFormatOptions> = {
   en: { year: "numeric", month: "short", day: "numeric" },
 };
 
-export function formatDate(
+const SHORT_DATE_OPTIONS: Record<UILang, Intl.DateTimeFormatOptions> = {
+  "zh-CN": { month: "short", day: "numeric" },
+  en: { month: "short", day: "numeric" },
+};
+
+export function formatShortDate(
   date: Date,
   timeZone: string,
   lang: UILang
 ): string {
+  return new Intl.DateTimeFormat(lang === "zh-CN" ? "zh-CN" : "en-US", {
+    ...SHORT_DATE_OPTIONS[lang],
+    timeZone,
+  }).format(date);
+}
+
+export function formatDate(date: Date, timeZone: string, lang: UILang): string {
   const text = new Intl.DateTimeFormat(lang === "zh-CN" ? "zh-CN" : "en-US", {
     ...DATE_OPTIONS[lang],
     timeZone,
