@@ -20,6 +20,12 @@ import { createNoteDialog } from "./sidenotes/dialog";
 import { createReadingFocus } from "./sidenotes/reading";
 
 type Selection = NoteReference | null;
+type PointerSample = {
+  target: EventTarget | null;
+  clientX: number;
+  clientY: number;
+  pointerType: string;
+};
 
 // Share the reading insets with height measurement so every card can fit the
 // same viewport used by placement and the automatic reading divider.
@@ -104,6 +110,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     printing = false,
     frame = 0,
     paintFrame = 0,
+    pointerFrame = 0,
     historyFrame = 0;
   let selected: Selection = null;
   const readingFocus = createReadingFocus();
@@ -112,6 +119,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   const motion = createSidenoteMotion(previewList, reducedMotion);
   let sidebarWidth = 0;
   let pointerPosition: { x: number; y: number } | null = null;
+  let pendingPointer: PointerSample | null = null;
   let articleHeight = 0,
     previewHeight = 0,
     rem = 16,
@@ -328,6 +336,85 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   function schedulePaint() {
     if (!paintFrame && !signal.aborted)
       paintFrame = requestAnimationFrame(paint);
+  }
+  function processPointer({
+    target,
+    clientX,
+    clientY,
+    pointerType,
+  }: PointerSample): boolean {
+    if (!wide || details.isOpen || pointerType === "touch") return false;
+    if (!(target instanceof Element)) return false;
+    let selection = selectionFrom(target);
+    if (sidebar.contains(target)) {
+      const bounds = sidebar.getBoundingClientRect();
+      // Across the short bridge from a node to its preview, keep that preview
+      // reachable. Vertical movement near the rail selects by stable slots.
+      if (target.closest(".sidenote-card")) {
+        selection = selection ?? selected;
+      } else if (clientX < bounds.right - 2 * rem) {
+        const card = sidebar.querySelector<HTMLElement>(
+          '[data-preview="focused"]'
+        );
+        const cardBounds = card?.getBoundingClientRect();
+        selection =
+          dockEngaged &&
+          cardBounds &&
+          clientY >= cardBounds.top &&
+          clientY <= cardBounds.bottom
+            ? selected
+            : null;
+      } else {
+        const y = clientY - article.getBoundingClientRect().top;
+        let low = 0;
+        let high = groups.length;
+        while (low < high) {
+          const middle = low + Math.floor((high - low) / 2);
+          if (groups[middle].anchor < y) low = middle + 1;
+          else high = middle;
+        }
+        const before = groups[low - 1];
+        const after = groups[low];
+        const nearest =
+          !before || (after && y - before.anchor > after.anchor - y)
+            ? after
+            : before;
+        selection =
+          nearest && Math.abs(nearest.anchor - y) < 3 * rem
+            ? nearest.current
+            : null;
+      }
+    } else if (!target.closest("a[data-footnote-ref]")) selection = null;
+    const changed =
+      dockEngaged !== !!selection ||
+      (!!selection &&
+        (selection.note !== selected?.note || selection.ref !== selected?.ref));
+    dockEngaged = !!selection;
+    if (changed && selection) remember(selection);
+    return changed;
+  }
+  function clearPendingPointer() {
+    if (pointerFrame) cancelAnimationFrame(pointerFrame);
+    pointerFrame = 0;
+    pendingPointer = null;
+  }
+  function flushPendingPointer(schedule = true): boolean {
+    if (!pendingPointer) return false;
+    if (pointerFrame) cancelAnimationFrame(pointerFrame);
+    pointerFrame = 0;
+    const pointer = pendingPointer;
+    pendingPointer = null;
+    const changed = processPointer(pointer);
+    if (changed && schedule) schedulePaint();
+    return changed;
+  }
+  function schedulePointer(pointer: PointerSample) {
+    pendingPointer = pointer;
+    if (!pointerFrame)
+      pointerFrame = requestAnimationFrame(() => {
+        pointerFrame = 0;
+        if (flushPendingPointer(false)) paint();
+      });
   }
   function layout() {
     cancelAnimationFrame(frame);
@@ -607,6 +694,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   article.addEventListener(
     "click",
     event => {
+      flushPendingPointer();
       if (
         event.button !== 0 ||
         event.metaKey ||
@@ -684,6 +772,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   article.addEventListener(
     "keydown",
     event => {
+      flushPendingPointer();
       if (
         event.target instanceof HTMLButtonElement &&
         event.target.matches(".sidenote-dot") &&
@@ -743,65 +832,36 @@ function enhanceSidenotes(article: HTMLElement): () => void {
         return;
       pointerPosition = { x: event.clientX, y: event.clientY };
       if (!wide || details.isOpen || event.pointerType === "touch") return;
-      const target = event.target;
-      if (!(target instanceof Element)) return;
-      let selection = selectionFrom(target);
-      if (sidebar.contains(target)) {
-        const bounds = sidebar.getBoundingClientRect();
-        // Across the short bridge from a node to its preview, keep that preview
-        // reachable. Vertical movement near the rail selects by stable slots.
-        if (target.closest(".sidenote-card")) {
-          selection = selection ?? selected;
-        } else if (event.clientX < bounds.right - 2 * rem) {
-          const card = sidebar.querySelector<HTMLElement>(
-            '[data-preview="focused"]'
-          );
-          const cardBounds = card?.getBoundingClientRect();
-          selection =
-            dockEngaged &&
-            cardBounds &&
-            event.clientY >= cardBounds.top &&
-            event.clientY <= cardBounds.bottom
-              ? selected
-              : null;
-        } else {
-          const y = event.clientY - article.getBoundingClientRect().top;
-          const nearest = groups.reduce<NoteGroup | null>(
-            (best, group) =>
-              !best || Math.abs(group.anchor - y) < Math.abs(best.anchor - y)
-                ? group
-                : best,
-            null
-          );
-          selection =
-            nearest && Math.abs(nearest.anchor - y) < 3 * rem
-              ? nearest.current
-              : null;
-        }
-      } else if (!target.closest("a[data-footnote-ref]")) selection = null;
-      const changed =
-        dockEngaged !== !!selection ||
-        (!!selection &&
-          (selection.note !== selected?.note ||
-            selection.ref !== selected?.ref));
-      dockEngaged = !!selection;
-      if (changed && selection) remember(selection);
-      if (changed) schedulePaint();
+      schedulePointer({
+        target: event.target,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        pointerType: event.pointerType,
+      });
     },
     { passive: true, signal }
   );
   document.addEventListener(
     "pointerleave",
     () => {
+      clearPendingPointer();
       dockEngaged = false;
       schedulePaint();
     },
     { signal }
   );
-  article.addEventListener("focusout", schedulePaint, { signal });
+  article.addEventListener(
+    "focusout",
+    () => {
+      flushPendingPointer();
+      schedulePaint();
+    },
+    { signal }
+  );
   article.addEventListener(
     "focusin",
     event => {
+      flushPendingPointer();
       if (!wide || details.isOpen) return;
       const selection = selectionFrom(event.target);
       if (selection) {
@@ -818,6 +878,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     () => {
       // Only a new pointer action can override reading; a stationary pointer
       // must not reselect an old note as the document moves underneath it.
+      clearPendingPointer();
       dockEngaged = false;
       readingFocus.scrolled();
       schedulePaint();
@@ -830,6 +891,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   window.addEventListener(
     "beforeprint",
     () => {
+      flushPendingPointer();
       details.close({ restoreFocus: false });
       printing = true;
       layout();
@@ -881,6 +943,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     details.close({ restoreFocus: false });
     controller.abort();
     motion.reset();
+    clearPendingPointer();
     cancelAnimationFrame(frame);
     cancelAnimationFrame(paintFrame);
     cancelAnimationFrame(historyFrame);
