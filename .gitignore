@@ -37,9 +37,16 @@ _site/
 
 # docs
 docs/**
+!docs/TODO.md
 # 临时复现/实验环境（不入库）
 tmp/
 
 # Local browser verification artifacts
 output/playwright/
 .playwright-cli/
+.codex-playwright-state/
+
+# Superseded local content and homepage image variants
+/posts/tmp.pdf
+/public/assets/home/lake-day-v2.webp
+/public/assets/home/lake-night.webp

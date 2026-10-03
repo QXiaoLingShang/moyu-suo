@@ -1,0 +1,22 @@
+# Keep text files consistent across Windows, macOS, and Linux.
+* text=auto eol=lf
+
+# Preserve binary assets byte-for-byte.
+*.avif binary -eol
+*.eot binary -eol
+*.gif binary -eol
+*.ico binary -eol
+*.jpeg binary -eol
+*.jpg binary -eol
+*.mp3 binary -eol
+*.mp4 binary -eol
+*.otf binary -eol
+*.pdf binary -eol
+*.png binary -eol
+*.ttf binary -eol
+*.wasm binary -eol
+*.webm binary -eol
+*.webp binary -eol
+*.woff binary -eol
+*.woff2 binary -eol
+*.zip binary -eol
