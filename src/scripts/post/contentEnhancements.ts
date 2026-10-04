@@ -1,8 +1,16 @@
+import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
+import { tplStr } from "@/i18n/format";
+
+type CopyButtonPhrase = "post.copyCode" | "post.codeCopied";
+
 export function setupArticleContentEnhancements(
   article: HTMLElement
 ): () => void {
   const controller = new AbortController();
-  const addedHeadingLinks: HTMLAnchorElement[] = [];
+  const headingLinks: Array<{
+    link: HTMLAnchorElement;
+    headingText: string;
+  }> = [];
   const addedGroupClasses = new Set<HTMLElement>();
   const codeBlocks: Array<{
     block: HTMLPreElement;
@@ -25,13 +33,15 @@ export function setupArticleContentEnhancements(
     link.className =
       "heading-link ms-2 no-underline opacity-75 md:opacity-0 md:group-hover:opacity-100 md:focus:opacity-100";
     link.href = `#${heading.id}`;
+    const headingText = heading.textContent.trim();
+    link.setAttribute("aria-label", getHeadingLinkLabel(headingText));
 
     const marker = document.createElement("span");
     marker.setAttribute("aria-hidden", "true");
     marker.textContent = "#";
     link.append(marker);
     heading.append(link);
-    addedHeadingLinks.push(link);
+    headingLinks.push({ link, headingText });
   }
 
   for (const block of article.querySelectorAll<HTMLPreElement>("pre")) {
@@ -46,7 +56,7 @@ export function setupArticleContentEnhancements(
     const button = document.createElement("button");
     button.type = "button";
     button.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
-    button.textContent = "Copy";
+    setCopyButtonPhrase(button, "post.copyCode");
     const originalTabIndex = block.getAttribute("tabindex");
     block.setAttribute("tabindex", "0");
     block.before(wrapper);
@@ -58,11 +68,11 @@ export function setupArticleContentEnhancements(
       async () => {
         const code = block.querySelector("code");
         await navigator.clipboard.writeText(code?.innerText ?? "");
-        button.textContent = "Copied";
+        setCopyButtonPhrase(button, "post.codeCopied");
 
         const timer = window.setTimeout(() => {
           copyTimers.delete(timer);
-          button.textContent = "Copy";
+          setCopyButtonPhrase(button, "post.copyCode");
         }, 700);
         copyTimers.add(timer);
       },
@@ -70,10 +80,31 @@ export function setupArticleContentEnhancements(
     );
   }
 
+  function getHeadingLinkLabel(headingText: string): string {
+    return tplStr(getUIString("post.copySectionLink"), { title: headingText });
+  }
+
+  function setCopyButtonPhrase(
+    button: HTMLButtonElement,
+    phrase: CopyButtonPhrase
+  ): void {
+    button.dataset.i18n = phrase;
+    button.textContent = getUIString(phrase);
+  }
+
+  function updateHeadingLinkLabels(): void {
+    for (const { link, headingText } of headingLinks)
+      link.setAttribute("aria-label", getHeadingLinkLabel(headingText));
+  }
+
+  document.addEventListener(UI_LANGUAGE_CHANGE_EVENT, updateHeadingLinkLabels, {
+    signal: controller.signal,
+  });
+
   return () => {
     controller.abort();
     copyTimers.forEach(timer => window.clearTimeout(timer));
-    addedHeadingLinks.forEach(link => link.remove());
+    headingLinks.forEach(({ link }) => link.remove());
     addedGroupClasses.forEach(heading => heading.classList.remove("group"));
 
     for (const { block, wrapper, button, originalTabIndex } of codeBlocks) {

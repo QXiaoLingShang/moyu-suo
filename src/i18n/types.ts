@@ -20,6 +20,14 @@ export interface UIStrings {
     sharePostViaEmail: string;
     tagLabel: string;
     backToTop: string;
+    copySectionLink: string;
+    copyCode: string;
+    codeCopied: string;
+    zoomImage: string;
+    zoomImageWithAlt: string;
+    imagePreview: string;
+    imagePreviewWithAlt: string;
+    closeImagePreview: string;
     goBack: string;
     editPage: string;
     previousPost: string;

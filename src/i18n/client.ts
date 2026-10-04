@@ -29,6 +29,9 @@ export const OTHER: Record<LangCode, LangCode> = {
 
 const STORAGE_KEY = "blog-ui-lang";
 
+/** Dynamic controls use this to refresh labels composed with page content. */
+export const UI_LANGUAGE_CHANGE_EVENT = "ui:language-change";
+
 function getByPath(obj: unknown, path: string): string {
   let cur: unknown = obj;
   for (const seg of path.split(".")) {
@@ -103,6 +106,16 @@ function readStored(): LangCode {
 
 export function getCurrentLang(): LangCode {
   return currentLang;
+}
+
+/** Read a UI phrase for controls that are created dynamically in the browser. */
+export function getUIString(path: string): string {
+  const documentLanguage = document.documentElement.lang;
+  const language: LangCode =
+    documentLanguage === "en" || documentLanguage === "zh-CN"
+      ? documentLanguage
+      : currentLang;
+  return getByPath(DICTS[language], path);
 }
 
 export function getInitialLang(): LangCode {
@@ -183,6 +196,7 @@ export function applyLang(target: LangCode) {
   swapDocumentTitle(fromCode, target);
 
   currentLang = target;
+  document.dispatchEvent(new Event(UI_LANGUAGE_CHANGE_EVENT));
 }
 
 export function setLang(target: LangCode) {

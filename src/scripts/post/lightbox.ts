@@ -1,3 +1,6 @@
+import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
+import { tplStr } from "@/i18n/format";
+
 type ImageAttributes = {
   role: string | null;
   tabIndex: string | null;
@@ -6,12 +9,6 @@ type ImageAttributes = {
 };
 
 type PendingRemoval = () => void;
-
-const LIGHTBOX_LABELS = {
-  zoom: "Zoom image",
-  preview: "Image preview",
-  close: "Close image preview",
-};
 
 export function setupImageLightbox(article: HTMLElement): () => void {
   const controller = new AbortController();
@@ -25,6 +22,34 @@ export function setupImageLightbox(article: HTMLElement): () => void {
   let previousBodyOverflow = "";
   let attributesFrame = 0;
   let openingFrame = 0;
+  let activeImageAlt: string | null = null;
+
+  function imageActionLabel(
+    phrase: "zoomImage" | "imagePreview",
+    alt: string
+  ): string {
+    if (!alt) return getUIString(`post.${phrase}`);
+    return tplStr(getUIString(`post.${phrase}WithAlt`), { alt });
+  }
+
+  function updateAccessibleNames(): void {
+    for (const image of originalAttributes.keys()) {
+      image.setAttribute(
+        "aria-label",
+        imageActionLabel("zoomImage", image.alt)
+      );
+    }
+
+    if (overlay && activeImageAlt !== null) {
+      overlay.setAttribute(
+        "aria-label",
+        imageActionLabel("imagePreview", activeImageAlt)
+      );
+      overlay
+        .querySelector("button")
+        ?.setAttribute("aria-label", getUIString("post.closeImagePreview"));
+    }
+  }
 
   const prefersReducedMotion = () =>
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -76,16 +101,19 @@ export function setupImageLightbox(article: HTMLElement): () => void {
       image.setAttribute("aria-haspopup", "dialog");
       image.setAttribute(
         "aria-label",
-        image.alt
-          ? `${LIGHTBOX_LABELS.zoom}: ${image.alt}`
-          : LIGHTBOX_LABELS.zoom
+        imageActionLabel("zoomImage", image.alt)
       );
     }
+  });
+
+  document.addEventListener(UI_LANGUAGE_CHANGE_EVENT, updateAccessibleNames, {
+    signal,
   });
 
   function open(src: string, alt: string, trigger: HTMLElement): void {
     if (overlay) return;
     lastFocused = trigger;
+    activeImageAlt = alt;
 
     const currentOverlay = document.createElement("div");
     overlay = currentOverlay;
@@ -94,14 +122,17 @@ export function setupImageLightbox(article: HTMLElement): () => void {
     currentOverlay.setAttribute("data-image-lightbox", "");
     currentOverlay.setAttribute(
       "aria-label",
-      alt ? `${LIGHTBOX_LABELS.preview}: ${alt}` : LIGHTBOX_LABELS.preview
+      imageActionLabel("imagePreview", alt)
     );
     currentOverlay.className =
       "fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200 motion-reduce:transition-none";
 
     const closeButton = document.createElement("button");
     closeButton.type = "button";
-    closeButton.setAttribute("aria-label", LIGHTBOX_LABELS.close);
+    closeButton.setAttribute(
+      "aria-label",
+      getUIString("post.closeImagePreview")
+    );
     closeButton.className =
       "absolute end-4 top-4 rounded p-2 text-3xl leading-none text-white";
     closeButton.textContent = "×";
@@ -246,6 +277,7 @@ export function setupImageLightbox(article: HTMLElement): () => void {
     if (!overlay) return;
     const closingOverlay = overlay;
     overlay = null;
+    activeImageAlt = null;
     document.removeEventListener("keydown", onKeyDown);
     if (openingFrame) window.cancelAnimationFrame(openingFrame);
     openingFrame = 0;
