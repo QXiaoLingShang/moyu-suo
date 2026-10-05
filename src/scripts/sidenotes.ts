@@ -18,6 +18,7 @@ import {
 } from "./sidenotes/views";
 import { createNoteDialog } from "./sidenotes/dialog";
 import { createReadingFocus } from "./sidenotes/reading";
+import { UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
 
 type Selection = NoteReference | null;
 type PointerSample = {
@@ -53,7 +54,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
       item instanceof HTMLElement && item.tagName === "LI" && !!item.id
   );
   if (!cards.length) return () => {};
-  const en = document.documentElement.lang.startsWith("en");
+  let en = document.documentElement.lang.startsWith("en");
   const controller = new AbortController();
   const { signal } = controller;
   const media = matchMedia("screen and (min-width: 80rem)");
@@ -134,6 +135,35 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     onClose: scheduleLayout,
     returnTarget: () =>
       selected?.ref ?? selected?.note.refs.find(isElementVisible),
+  });
+
+  function updateDotLabel(
+    dot: HTMLButtonElement,
+    choices: readonly NoteReference[]
+  ): void {
+    const numbers = choices.map(item => item.note.number).join(", ");
+    dot.setAttribute(
+      "aria-label",
+      `${en ? "Read notes" : "查看注解"} ${numbers}`
+    );
+    dot.title = `${en ? "Notes" : "注解"} ${numbers}`;
+  }
+
+  function updateLanguage(): void {
+    en = document.documentElement.lang.startsWith("en");
+    sidebar.setAttribute("aria-label", en ? "Margin notes" : "页边注解");
+    rail.setAttribute("aria-label", en ? "Article notes" : "文章注解");
+    previews.updateLanguage(en);
+    details.updateLanguage(en);
+    for (const dot of dotReferences.keys()) {
+      const group = groups[Number(dot.dataset.groupIndex)];
+      if (!group) continue;
+      updateDotLabel(dot, getSidenoteChoices(group.references, group.current));
+    }
+  }
+
+  document.addEventListener(UI_LANGUAGE_CHANGE_EVENT, updateLanguage, {
+    signal,
   });
 
   function selectionFrom(target: EventTarget | null): Selection {
@@ -549,11 +579,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
         dot.type = "button";
         dot.className = "sidenote-dot";
         dot.style.top = `${group.anchor}px`;
-        const numbers = choices.map(item => item.note.number).join(", ");
-        dot.setAttribute(
-          "aria-label",
-          `${en ? "Read notes" : "查看注解"} ${numbers}`
-        );
+        updateDotLabel(dot, choices);
         if (choices.length === 1) dot.setAttribute("aria-haspopup", "dialog");
         else dot.removeAttribute("aria-haspopup");
         dot.dataset.groupIndex = String(index);
@@ -561,7 +587,6 @@ function enhanceSidenotes(article: HTMLElement): () => void {
           choices.length > 1
             ? `+${choices.length}`
             : String(choices[0].note.number).padStart(2, "0");
-        dot.title = `${en ? "Notes" : "注解"} ${numbers}`;
         dot.toggleAttribute("data-group", choices.length > 1);
         dotReferences.set(dot, group.references);
         if (!dot.parentElement) rail.append(dot);

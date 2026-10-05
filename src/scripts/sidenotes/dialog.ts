@@ -25,11 +25,12 @@ export function createNoteDialog({
   article,
   section,
   notes,
-  english: en,
+  english,
   signal,
   onClose,
   returnTarget,
 }: DialogOptions) {
+  let en = english;
   const dialog = document.createElement("dialog");
   dialog.className = "sidenote-dialog";
   dialog.dataset.pagefindIgnore = "";
@@ -61,18 +62,43 @@ export function createNoteDialog({
   article.append(dialog);
   let modalNote: Note | null = null,
     opener: HTMLElement | null = null;
+  let modalReference: NoteReference | null = null;
   let modalItems: NoteReference[] = [];
   let modalAllNotes = true;
   let sourceMinHeight = "";
   let rootOverflow = "",
     bodyOverflow = "",
     rootGutter = "";
+
+  function updateCurrentCopy(): void {
+    if (!modalNote || !modalReference) return;
+    const { note, ref } = modalReference;
+    dialogTitle.textContent = noteLabel(note, en);
+    const returnRef = ref ?? note.refs.find(isElementVisible) ?? note.refs[0];
+    if (returnRef && note.refs.length > 1)
+      dialogTitle.textContent += ` · ${note.refs.indexOf(returnRef) + 1}/${note.refs.length}`;
+    const position = modalItems.findIndex(item => item.note === note);
+    counter.textContent = `${modalAllNotes ? (en ? "All notes" : "全篇") : en ? "This position" : "同位置"} · ${position + 1} / ${modalItems.length}`;
+  }
+
+  function updateLanguage(nextEnglish: boolean): void {
+    if (en === nextEnglish) return;
+    en = nextEnglish;
+    dialog.setAttribute("aria-label", en ? "Note details" : "注解详情");
+    dialogReturn.textContent = en ? "Back to text ↗" : "返回正文 ↗";
+    close.setAttribute("aria-label", en ? "Close note" : "关闭注解");
+    previous.textContent = en ? "← Previous" : "← 上一条";
+    next.textContent = en ? "Next →" : "下一条 →";
+    updateCurrentCopy();
+  }
+
   function restoreBody() {
     if (modalNote) {
       modalNote.source.append(modalNote.body);
       modalNote.source.style.minHeight = sourceMinHeight;
     }
     modalNote = null;
+    modalReference = null;
   }
   function closeDetail({
     restoreFocus = true,
@@ -124,20 +150,18 @@ export function createNoteDialog({
       );
     restoreBody();
     modalNote = note;
+    modalReference = reference;
     // Moving the unique rich body must not shorten a visible endnote list or
     // clamp the page's scroll position while its detail dialog is open.
     sourceMinHeight = note.source.style.minHeight;
     if (!section.hidden)
       note.source.style.minHeight = `${note.source.getBoundingClientRect().height}px`;
     content.append(note.body);
-    dialogTitle.textContent = noteLabel(note, en);
     const returnRef = ref ?? note.refs.find(isElementVisible) ?? note.refs[0];
-    if (returnRef && note.refs.length > 1)
-      dialogTitle.textContent += ` · ${note.refs.indexOf(returnRef) + 1}/${note.refs.length}`;
     dialogReturn.hidden = !returnRef;
     if (returnRef) dialogReturn.href = `#${encodeURIComponent(returnRef.id)}`;
     const position = modalItems.findIndex(item => item.note === note);
-    counter.textContent = `${modalAllNotes ? (en ? "All notes" : "全篇") : en ? "This position" : "同位置"} · ${position + 1} / ${modalItems.length}`;
+    updateCurrentCopy();
     previous.disabled = position === 0;
     next.disabled = position === modalItems.length - 1;
     content.scrollTop = 0;
@@ -204,6 +228,7 @@ export function createNoteDialog({
       return dialog.open;
     },
     open,
+    updateLanguage,
     close: closeDetail,
     dispose() {
       closeDetail({ restoreFocus: false });

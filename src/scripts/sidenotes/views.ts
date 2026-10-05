@@ -14,8 +14,10 @@ export type NoteView = {
   readonly label: HTMLSpanElement;
   readonly back: HTMLAnchorElement;
   readonly preview: HTMLButtonElement;
+  readonly hint: HTMLSpanElement;
   readonly excerpt: HTMLSpanElement;
   readonly switcher: HTMLDivElement;
+  emptyExcerpt: boolean;
   reference: NoteReference;
 };
 
@@ -41,6 +43,7 @@ export function createPreviewViews(
   first: NoteReference,
   english: boolean
 ) {
+  let currentEnglish = english;
   const views = new Map<HTMLElement, NoteView>();
   const firstReferenceByNote = new WeakMap<
     NoteGroup,
@@ -53,6 +56,27 @@ export function createPreviewViews(
   const byOption = new WeakMap<HTMLButtonElement, NoteReference>();
   const renderedChoices = new WeakMap<NoteView, readonly Note[]>();
 
+  function updateReferenceLabels(view: NoteView): void {
+    const { note, ref } = view.reference;
+    const occurrence = ref ? note.refs.indexOf(ref) + 1 : 0;
+    const label = noteLabel(note, currentEnglish);
+    view.label.textContent = `${label}${note.refs.length > 1 ? ` · ${occurrence}/${note.refs.length}` : ""}`;
+    view.label.title =
+      note.refs.length > 1
+        ? currentEnglish
+          ? `Reference ${occurrence} of ${note.refs.length}`
+          : `正文第 ${occurrence} 处引用，共 ${note.refs.length} 处`
+        : label;
+    view.preview.setAttribute(
+      "aria-label",
+      `${currentEnglish ? "Read note" : "查看完整注解"} ${note.number}`
+    );
+    if (view.emptyExcerpt)
+      view.excerpt.textContent = currentEnglish
+        ? "Open to view content"
+        : "打开查看内容";
+  }
+
   function renderReference(view: NoteView, reference: NoteReference): void {
     const { note, ref } = reference;
     view.reference = reference;
@@ -60,30 +84,19 @@ export function createPreviewViews(
     view.card.dataset.refId = ref?.id ?? "";
     view.back.hidden = !ref;
     if (ref) view.back.href = `#${encodeURIComponent(ref.id)}`;
-    const occurrence = ref ? note.refs.indexOf(ref) + 1 : 0;
-    const label = noteLabel(note, english);
-    view.label.textContent = `${label}${note.refs.length > 1 ? ` · ${occurrence}/${note.refs.length}` : ""}`;
-    view.label.title =
-      note.refs.length > 1
-        ? english
-          ? `Reference ${occurrence} of ${note.refs.length}`
-          : `正文第 ${occurrence} 处引用，共 ${note.refs.length} 处`
-        : label;
+    updateReferenceLabels(view);
     let template = excerptTemplates.get(note);
     if (!template) {
       template = createSidenoteExcerpt(note.body);
       excerptTemplates.set(note, template);
     }
     const excerpt = template.cloneNode(true);
-    if (excerpt.textContent?.trim()) view.excerpt.replaceChildren(excerpt);
-    else
-      view.excerpt.textContent = english
+    view.emptyExcerpt = !excerpt.textContent?.trim();
+    if (view.emptyExcerpt) {
+      view.excerpt.textContent = currentEnglish
         ? "Open to view content"
         : "打开查看内容";
-    view.preview.setAttribute(
-      "aria-label",
-      `${english ? "Read note" : "查看完整注解"} ${note.number}`
-    );
+    } else view.excerpt.replaceChildren(excerpt);
   }
 
   function create(reference: NoteReference, dock = false): NoteView {
@@ -97,7 +110,7 @@ export function createPreviewViews(
     const label = document.createElement("span");
     const back = document.createElement("a");
     back.className = "sidenote-return";
-    back.textContent = english ? "Back ↗" : "返回正文 ↗";
+    back.textContent = currentEnglish ? "Back ↗" : "返回正文 ↗";
     heading.append(label, back);
     const preview = document.createElement("button");
     preview.type = "button";
@@ -107,25 +120,58 @@ export function createPreviewViews(
     excerpt.className = "sidenote-excerpt";
     const hint = document.createElement("span");
     hint.className = "sidenote-hint";
-    hint.textContent = english ? "Read note ↗" : "查看详情 ↗";
+    hint.textContent = currentEnglish ? "Read note ↗" : "查看详情 ↗";
     preview.append(excerpt, hint);
     const switcher = document.createElement("div");
     switcher.className = "sidenote-switcher";
     switcher.setAttribute("role", "group");
     switcher.setAttribute(
       "aria-label",
-      english ? "Notes at this position" : "同位置注解，选择切换"
+      currentEnglish ? "Notes at this position" : "同位置注解，选择切换"
     );
     switcher.hidden = true;
     card.append(heading, switcher, preview);
     container.append(card);
-    const view = { card, label, back, preview, excerpt, switcher, reference };
+    const view = {
+      card,
+      label,
+      back,
+      preview,
+      hint,
+      excerpt,
+      switcher,
+      emptyExcerpt: false,
+      reference,
+    };
     byCard.set(card, view);
     renderReference(view, reference);
     return view;
   }
 
   const dock = create(first, true);
+
+  function updateLanguage(nextEnglish: boolean): void {
+    if (currentEnglish === nextEnglish) return;
+    currentEnglish = nextEnglish;
+    for (const view of [dock, ...views.values()]) {
+      view.back.textContent = currentEnglish ? "Back ↗" : "返回正文 ↗";
+      view.hint.textContent = currentEnglish ? "Read note ↗" : "查看详情 ↗";
+      view.switcher.setAttribute(
+        "aria-label",
+        currentEnglish ? "Notes at this position" : "同位置注解，选择切换"
+      );
+      updateReferenceLabels(view);
+      const choices = renderedChoices.get(view) ?? [];
+      optionButtons.get(view)?.forEach((button, index) => {
+        const note = choices[index];
+        if (!note) return;
+        button.setAttribute(
+          "aria-label",
+          `${currentEnglish ? "Preview note" : "预览注解"} ${note.number}`
+        );
+      });
+    }
+  }
 
   function forGroup(group: NoteGroup, reference = group.current): NoteView {
     let references = firstReferenceByNote.get(group);
@@ -174,7 +220,7 @@ export function createPreviewViews(
         button.textContent = String(item.note.number).padStart(2, "0");
         button.setAttribute(
           "aria-label",
-          `${english ? "Preview note" : "预览注解"} ${item.note.number}`
+          `${currentEnglish ? "Preview note" : "预览注解"} ${item.note.number}`
         );
         return button;
       });
@@ -223,6 +269,7 @@ export function createPreviewViews(
     focused,
     prune,
     dispose,
+    updateLanguage,
     values: () => views.values(),
     referenceForCard: (card: HTMLElement) => byCard.get(card)?.reference,
     referenceForOption: (button: HTMLButtonElement) => byOption.get(button),
