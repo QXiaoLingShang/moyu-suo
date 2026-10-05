@@ -1,3 +1,5 @@
+import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
+
 type TocNode = {
   heading: HTMLHeadingElement;
   level: number;
@@ -46,9 +48,33 @@ export function setupArticleToc(article: HTMLElement): () => void {
   }
 
   const links = new Map<string, HTMLAnchorElement>();
-  const expandLabel = tocRoot.dataset.expandLabel ?? "Expand section";
-  const collapseLabel = tocRoot.dataset.collapseLabel ?? "Collapse section";
+  const initialExpandLabel = tocRoot.dataset.expandLabel ?? "Expand";
+  const initialCollapseLabel = tocRoot.dataset.collapseLabel ?? "Collapse";
+  let expandLabel =
+    getUIString("post.expandTocSection") || initialExpandLabel;
+  let collapseLabel =
+    getUIString("post.collapseTocSection") || initialCollapseLabel;
   let childListCount = 0;
+
+  function updateToggleLabels(): void {
+    expandLabel = getUIString("post.expandTocSection") || initialExpandLabel;
+    collapseLabel =
+      getUIString("post.collapseTocSection") || initialCollapseLabel;
+
+    for (const toggle of tocListRoot.querySelectorAll<HTMLButtonElement>(
+      ".article-toc-toggle"
+    )) {
+      const headingText =
+        toggle.parentElement
+          ?.querySelector(".article-toc-link")
+          ?.textContent?.trim() ?? "";
+      const actionLabel =
+        toggle.getAttribute("aria-expanded") === "true"
+          ? collapseLabel
+          : expandLabel;
+      toggle.setAttribute("aria-label", `${actionLabel} ${headingText}`);
+    }
+  }
 
   function appendNodes(nodes: TocNode[], list: HTMLUListElement): void {
     for (const node of nodes) {
@@ -94,6 +120,11 @@ export function setupArticleToc(article: HTMLElement): () => void {
   }
 
   appendNodes(roots, tocListRoot);
+  document.addEventListener(
+    UI_LANGUAGE_CHANGE_EVENT,
+    updateToggleLabels,
+    { signal }
+  );
 
   const desktopQuery = window.matchMedia("(min-width: 80rem)");
   function syncVisibility(): void {

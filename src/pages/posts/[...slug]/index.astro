@@ -17,6 +17,7 @@ import BackButton from "./_components/BackButton.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import config from "@/config";
+import { useTranslations } from "@/i18n";
 import "@/styles/sidenotes.css";
 import "@/styles/reading-focus.css";
 
@@ -82,6 +83,7 @@ type Props = {
 
 const { post, prevPost, nextPost } = Astro.props;
 const locale = Astro.currentLocale ?? config.site.lang;
+const t = useTranslations(locale);
 const isTest = isTestPost(post);
 
 const {
@@ -215,13 +217,14 @@ const ogImage = ogImageUrl
 
   <nav
     id="article-toc"
-    aria-label={locale === "en" ? "Article contents" : "文章目录"}
-    data-expand-label={locale === "en" ? "Expand" : "展开"}
-    data-collapse-label={locale === "en" ? "Collapse" : "折叠"}
+    aria-label={t.post.articleContents}
+    data-i18n-aria-label="post.articleContents"
+    data-expand-label={t.post.expandTocSection}
+    data-collapse-label={t.post.collapseTocSection}
     hidden
   >
-    <h2 id="article-toc-title">
-      {locale === "en" ? "On this page" : "本文目录"}
+    <h2 id="article-toc-title" data-i18n="post.onThisPage">
+      {t.post.onThisPage}
     </h2>
     <div id="article-toc-scroll">
       <div id="article-toc-content">

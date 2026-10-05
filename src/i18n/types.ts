@@ -28,6 +28,10 @@ export interface UIStrings {
     imagePreview: string;
     imagePreviewWithAlt: string;
     closeImagePreview: string;
+    articleContents: string;
+    onThisPage: string;
+    expandTocSection: string;
+    collapseTocSection: string;
     goBack: string;
     editPage: string;
     previousPost: string;
