@@ -6,7 +6,11 @@
   --home-pointer-ink: var(--home-moonlight);
   --home-pointer-outline: #172439;
   --home-highlight: #f6d7a1;
-  --home-highlight-glow: rgb(246 215 161 / 48%);
+  --home-highlight-glow: rgb(246 215 161 / 58%);
+  --home-highlight-text-shadow:
+    0 0 0.14rem color-mix(in srgb, var(--home-highlight) 72%, white),
+    0 0 0.65rem var(--home-highlight-glow),
+    0 0 1.2rem color-mix(in srgb, var(--home-highlight) 32%, transparent);
   --home-orbit-anchor: #bfdafa;
 }
 
@@ -28,7 +32,7 @@
   --home-pointer-ink: #000;
   --home-pointer-outline: #fff;
   --home-highlight: #006dff;
-  --home-highlight-glow: rgb(0 109 255 / 44%);
+  --home-highlight-glow: rgb(0 109 255 / 58%);
   --home-orbit-anchor: #000;
 }
 
@@ -425,7 +429,7 @@
     [data-home-pointer-text="glyphs"]
   ) {
   color: var(--home-highlight);
-  text-shadow: 0 0 1rem var(--home-highlight-glow);
+  text-shadow: var(--home-highlight-text-shadow);
   transition:
     color 120ms cubic-bezier(0.22, 1, 0.36, 1),
     text-shadow 120ms ease;
@@ -754,7 +758,7 @@ html[data-home-cursor-active] * {
 .home-entrance__glyph[data-home-pointer-lit="true"],
 .home-pointer__glyph[data-home-pointer-lit="true"] {
   color: var(--home-highlight);
-  text-shadow: 0 0 0.7rem var(--home-highlight-glow);
+  text-shadow: var(--home-highlight-text-shadow);
 }
 
 .home-entrance__glyph[data-home-pointer-lit="true"],
@@ -770,7 +774,7 @@ html[data-home-cursor-active] * {
 @keyframes home-glyph-depart {
   from {
     color: var(--home-highlight);
-    text-shadow: 0 0 0.7rem var(--home-highlight-glow);
+    text-shadow: var(--home-highlight-text-shadow);
     filter: brightness(1);
   }
 
@@ -789,7 +793,7 @@ html[data-home-cursor-active] * {
 
   to {
     color: var(--home-highlight);
-    text-shadow: 0 0 0.7rem var(--home-highlight-glow);
+    text-shadow: var(--home-highlight-text-shadow);
   }
 }
 
@@ -1374,7 +1378,7 @@ html:not([data-home-cursor-active]) .home-recent__secondary a:hover {
   .home-entrance[data-active] .home-entrance__glyph,
   .home-entrance a:hover .home-entrance__glyph {
     color: var(--home-highlight);
-    text-shadow: 0 0 0.7rem var(--home-highlight-glow);
+    text-shadow: var(--home-highlight-text-shadow);
   }
 
   .home-shell,

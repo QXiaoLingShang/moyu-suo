@@ -38,6 +38,30 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
+// Carry live momentum into the next route so a retarget bends instead of restarting.
+function approachTangent(
+  origin: PointerPoint,
+  target: PointerPoint,
+  velocity: PointerPoint,
+  durationMs: number
+): PointerPoint {
+  const delta = { x: target.x - origin.x, y: target.y - origin.y };
+  const distance = Math.hypot(delta.x, delta.y);
+  if (distance === 0) return { x: 0, y: 0 };
+
+  const tangent = {
+    x: velocity.x * durationMs,
+    y: velocity.y * durationMs,
+  };
+  const tangentLength = Math.hypot(tangent.x, tangent.y);
+  if (tangentLength < 0.02) return { x: delta.x * 3, y: delta.y * 3 };
+
+  const maxTangentLength = distance * 2.5;
+  if (tangentLength <= maxTangentLength) return tangent;
+  const scale = maxTangentLength / tangentLength;
+  return { x: tangent.x * scale, y: tangent.y * scale };
+}
+
 /** Coordinates pointer input and position updates; transitions own effect phases. */
 export function createHomePointerController({
   root,
@@ -54,6 +78,7 @@ export function createHomePointerController({
   let glowVelocity: PointerPoint = { x: 0, y: 0 };
   let glowTarget: PointerPoint = { x: 0, y: 0 };
   let approachOrigin: PointerPoint = { x: 0, y: 0 };
+  let approachStartTangent: PointerPoint = { x: 0, y: 0 };
   let approachStartedAt = 0;
   let approachProgressAtStart = 0;
   let approachDurationMs = APPROACH_DURATION_MS;
@@ -81,6 +106,12 @@ export function createHomePointerController({
         approachStartedAt = performance.now();
         approachProgressAtStart = 0;
         approachDurationMs = APPROACH_DURATION_MS;
+        approachStartTangent = approachTangent(
+          origin,
+          target,
+          glowVelocity,
+          approachDurationMs
+        );
         glowTarget = target;
         scheduleFrame();
       },
@@ -97,6 +128,12 @@ export function createHomePointerController({
         approachDurationMs = Math.max(
           1,
           APPROACH_DURATION_MS * (1 - approachProgressAtStart)
+        );
+        approachStartTangent = approachTangent(
+          approachOrigin,
+          target,
+          glowVelocity,
+          approachDurationMs
         );
         glowTarget = target;
         scheduleFrame();
@@ -134,10 +171,20 @@ export function createHomePointerController({
       const progress =
         approachProgressAtStart +
         (1 - approachProgressAtStart) * segmentProgress;
-      const easeOut = 1 - (1 - segmentProgress) ** 3;
+      const t2 = segmentProgress * segmentProgress;
+      const t3 = t2 * segmentProgress;
+      const startWeight = 2 * t3 - 3 * t2 + 1;
+      const tangentWeight = t3 - 2 * t2 + segmentProgress;
+      const targetWeight = -2 * t3 + 3 * t2;
       glowPosition = {
-        x: approachOrigin.x + (glowTarget.x - approachOrigin.x) * easeOut,
-        y: approachOrigin.y + (glowTarget.y - approachOrigin.y) * easeOut,
+        x:
+          startWeight * approachOrigin.x +
+          tangentWeight * approachStartTangent.x +
+          targetWeight * glowTarget.x,
+        y:
+          startWeight * approachOrigin.y +
+          tangentWeight * approachStartTangent.y +
+          targetWeight * glowTarget.y,
       };
 
       shouldSplit =

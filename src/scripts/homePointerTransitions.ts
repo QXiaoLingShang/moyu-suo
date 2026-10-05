@@ -83,8 +83,11 @@ export function createHomePointerTransitions({
   let activeSession: TransitionSession | null = null;
   let gatheringRound: GatheringRound | null = null;
 
-  function createSession(target: HTMLElement): TransitionSession {
-    return { target, particleOwner: {} };
+  function createSession(
+    target: HTMLElement,
+    particleOwner: object = {}
+  ): TransitionSession {
+    return { target, particleOwner };
   }
 
   function setGlowSize(size: number): void {
@@ -160,6 +163,7 @@ export function createHomePointerTransitions({
 
   function abandonGatheringRound(): void {
     if (!gatheringRound) return;
+    particles.cancelOwner(gatheringRound.session.particleOwner);
     highlight.clearTarget(gatheringRound.session.target);
     gatheringRound = null;
   }
@@ -168,30 +172,36 @@ export function createHomePointerTransitions({
     targets.prepare(target);
 
     const round = gatheringRound;
-    const reversingGather =
-      round?.session.target === target && state === "gathering";
+    const reversingGather = round && state === "gathering";
     if (reversingGather && round) {
-      const session = round.session;
       const destinations = targets.destinations(target);
-      const points = new Map(
-        destinations.map(destination => [
-          destination.glyphIndex,
-          destination.point,
-        ])
+      const previousTarget = round.session.target;
+      const previousAnchors = highlight.getAnchors(previousTarget);
+      // Keep anchor indices stable so each returning particle can change direction in place.
+      const anchors = samplePointerParticles(
+        destinations,
+        previousAnchors.length > 0
+          ? {
+              min: previousAnchors.length,
+              max: previousAnchors.length,
+              glyphsPerParticle: 1,
+            }
+          : undefined
       );
-      const anchors = highlight.getAnchors(target);
-      const anchorsByIndex = new Map(
-        anchors.map(anchor => [anchor.anchorIndex, anchor])
-      );
-      highlight.resetArrived(target);
-      let remaining = 0;
-
-      gatheringRound = null;
+      if (previousTarget !== target) highlight.clearTarget(previousTarget);
+      const session = createSession(target, round.session.particleOwner);
       activeSession = session;
+      gatheringRound = null;
+      highlight.setAnchors(target, anchors);
       highlight.setPhase(target, "dispersing");
       glow.dataset.mode = "entry";
       setState("dispersing");
       setGlowSize(MERGED_GLOW_SIZE);
+
+      const anchorsByIndex = new Map(
+        anchors.map(anchor => [anchor.anchorIndex, anchor])
+      );
+      let remaining = 0;
 
       const onAnchorComplete = (
         anchorIndex: number,
@@ -208,7 +218,7 @@ export function createHomePointerTransitions({
         getTarget: anchorIndex => {
           const anchor = anchorsByIndex.get(anchorIndex);
           return (
-            (anchor && points.get(anchor.glyphIndex)) ??
+            anchor?.point ??
             targets.boundaryPoint(target, motion.pointerPosition(), 0)
           );
         },
@@ -227,15 +237,17 @@ export function createHomePointerTransitions({
         anchor => !retargetedAnchors.has(anchor.anchorIndex)
       );
       remaining = retargetedAnchors.size + missingAnchors.length;
+      // Missing return motions have already converged or been evicted; resume from the gather point.
+      const missingAnchorOrigin = motion.pointerPosition();
 
       missingAnchors.forEach((anchor, index) => {
-        const destinationPoint = points.get(anchor.glyphIndex) ?? anchor.point;
+        const destinationPoint = anchor.point;
         particles.track({
-          start: motion.pointerPosition(),
+          start: missingAnchorOrigin,
           getTarget: () => destinationPoint,
           options: {
             duration: particleTravelDuration({
-              from: motion.pointerPosition(),
+              from: missingAnchorOrigin,
               to: destinationPoint,
               particleIndex: anchor.anchorIndex,
               minimumDurationMs: ARRIVAL_MIN_DURATION_MS,
@@ -277,9 +289,10 @@ export function createHomePointerTransitions({
       return;
     highlight.clearTarget(round.session.target);
     gatheringRound = null;
+    // Re-form the hidden halo where the gathered particles have returned.
+    motion.snapGlowToPointer();
     setState("departing");
     setGlowSize(DEFAULT_GLOW_SIZE);
-    motion.snapGlowToPointer();
     motion.scheduleFrame();
   }
 
@@ -291,6 +304,7 @@ export function createHomePointerTransitions({
     const round: GatheringRound = { session };
     const anchors = highlight.getArrivedAnchors(target);
     gatheringRound = round;
+    motion.setGlowTarget(motion.pointerPosition());
     // Drop whole-control merged styling while individual glyphs retract.
     highlight.setPhase(target, "departing");
     glow.removeAttribute("data-mode");
@@ -418,10 +432,6 @@ export function createHomePointerTransitions({
       return;
     }
 
-    if (gatheringRound?.session.target === nextTarget && nextTarget) {
-      // A re-entry after reflow must use fresh glyph nodes and anchor positions.
-      abandonGatheringRound();
-    }
     if (hoveredTarget !== nextTarget) setHoveredTarget(nextTarget);
   }
 
@@ -501,10 +511,10 @@ export function createHomePointerTransitions({
   }
 
   function followPointer(): void {
+    motion.setGlowTarget(motion.pointerPosition());
     if (state === "gathering") return;
     glow.removeAttribute("data-mode");
     if (state !== "following") setState("following");
-    motion.setGlowTarget(motion.pointerPosition());
   }
 
   function disperseAtPointer(origin: PointerPoint): void {

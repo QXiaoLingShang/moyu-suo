@@ -111,10 +111,6 @@ export class HomePointerHighlight {
     );
   }
 
-  resetArrived(target: HTMLElement): void {
-    this.arrived.set(target, new Set());
-  }
-
   markArrived(target: HTMLElement, anchorIndex: number): void {
     const anchors = this.getAnchors(target);
     const arrived = this.arrived.get(target) ?? new Set<number>();
