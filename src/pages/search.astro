@@ -216,8 +216,14 @@ const t = useTranslations(locale);
       border: 1px solid var(--border);
     }
 
+    input::placeholder {
+      color: var(--muted-foreground);
+      opacity: 1;
+    }
+
     input:focus-visible {
-      outline: 1px solid var(--accent);
+      outline: 2px dashed var(--accent);
+      outline-offset: 2px;
     }
 
     .pagefind-ui__result-title a {
