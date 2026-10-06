@@ -31,7 +31,10 @@ const items = await Promise.all(
 
 {
   items.some(({ Icon }) => Icon) && (
-    <div class="flex flex-none flex-col items-center justify-center gap-1 md:items-start">
+    <div
+      data-pagefind-ignore
+      class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"
+    >
       <span class="italic" data-i18n="post.sharePostIntro">
         {t.post.sharePostIntro}
       </span>

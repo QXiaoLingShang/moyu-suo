@@ -1,36 +1,9 @@
 ---
 import config from "@/config";
+import { useTranslations } from "@/i18n";
 
 const locale = Astro.currentLocale ?? config.site.lang;
-const isEnglish = locale.toLowerCase().startsWith("en");
-
-const labels = isEnglish
-  ? {
-      title: "Reading focus",
-      pointer: "Follow pointer",
-      style: "Focus style",
-      left: "Left line",
-      right: "Right line",
-      block: "Highlight",
-      toc: "Highlight TOC target",
-      touch: "Pointer focus is available when using a mouse.",
-      duration: "Heading highlight duration",
-      offset: "Space above target heading",
-      seconds: "s",
-    }
-  : {
-      title: "阅读聚焦",
-      pointer: "跟随鼠标聚焦",
-      style: "聚焦样式",
-      left: "左侧线",
-      right: "右侧线",
-      block: "区域高亮",
-      toc: "高亮目录跳转标题",
-      touch: "连接鼠标后可使用跟随聚焦。",
-      duration: "标题高亮时长",
-      offset: "跳转顶部留白",
-      seconds: "秒",
-    };
+const { readingFocus: labels } = useTranslations(locale);
 ---
 
 <div class="reading-focus-toolbar" data-pagefind-ignore hidden>
@@ -50,22 +23,34 @@ const labels = isEnglish
         ></path>
         <path d="M7 12h10"></path>
       </svg>
-      <span>{labels.title}</span>
+      <span data-i18n="readingFocus.title">{labels.title}</span>
     </summary>
 
     <div class="reading-focus-panel">
-      <div class="reading-focus-panel-heading">{labels.title}</div>
+      <div class="reading-focus-panel-heading" data-i18n="readingFocus.title">
+        {labels.title}
+      </div>
 
       <label class="reading-focus-switch-row">
-        <span>{labels.pointer}</span>
-        <input type="checkbox" data-reading-focus-toggle />
+        <span data-i18n="readingFocus.pointer">{labels.pointer}</span>
+        <input
+          type="checkbox"
+          data-reading-focus-toggle
+          aria-describedby="reading-focus-pointer-hint"
+        />
         <span class="reading-focus-switch" aria-hidden="true"></span>
       </label>
 
-      <p class="reading-focus-touch-hint">{labels.touch}</p>
+      <p
+        id="reading-focus-pointer-hint"
+        class="reading-focus-pointer-hint"
+        data-i18n="readingFocus.hint"
+      >
+        {labels.hint}
+      </p>
 
       <fieldset class="reading-focus-styles">
-        <legend>{labels.style}</legend>
+        <legend data-i18n="readingFocus.style">{labels.style}</legend>
         <div class="reading-focus-style-options">
           {
             (["left", "right", "block"] as const).map(style => (
@@ -77,8 +62,10 @@ const labels = isEnglish
                   data-reading-focus-style
                 />
                 <span class={`reading-focus-style-preview is-${style}`}>
-                  <span aria-hidden="true" />
-                  {labels[style]}
+                  <span class="reading-focus-style-swatch" aria-hidden="true" />
+                  <span data-i18n={`readingFocus.${style}`}>
+                    {labels[style]}
+                  </span>
                 </span>
               </label>
             ))
@@ -87,20 +74,19 @@ const labels = isEnglish
       </fieldset>
 
       <label class="reading-focus-switch-row">
-        <span>{labels.toc}</span>
+        <span data-i18n="readingFocus.toc">{labels.toc}</span>
         <input type="checkbox" data-reading-focus-toc-toggle />
         <span class="reading-focus-switch" aria-hidden="true"></span>
       </label>
 
       <label class="reading-focus-range" for="reading-focus-duration">
-        <span>{labels.duration}</span>
-        <span
-          ><output
-            for="reading-focus-duration"
-            data-reading-focus-duration-value>4</output
+        <span data-i18n="readingFocus.duration">{labels.duration}</span>
+        <span>
+          <output for="reading-focus-duration" data-reading-focus-duration-value
+            >4</output
           >
-          {labels.seconds}</span
-        >
+          <span data-i18n="readingFocus.seconds">{labels.seconds}</span>
+        </span>
         <input
           id="reading-focus-duration"
           type="range"
@@ -111,12 +97,12 @@ const labels = isEnglish
         />
       </label>
       <label class="reading-focus-range" for="reading-focus-offset">
-        <span>{labels.offset}</span>
-        <span
-          ><output for="reading-focus-offset" data-reading-focus-offset-value
+        <span data-i18n="readingFocus.offset">{labels.offset}</span>
+        <span>
+          <output for="reading-focus-offset" data-reading-focus-offset-value
             >22</output
-          >%</span
-        >
+          >%
+        </span>
         <input
           id="reading-focus-offset"
           type="range"

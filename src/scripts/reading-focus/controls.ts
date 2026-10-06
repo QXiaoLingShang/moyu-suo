@@ -41,9 +41,18 @@ export function bindReadingFocusControls({
     "[data-reading-focus-duration-value]"
   );
   const offsetValue = menu.querySelector("[data-reading-focus-offset-value]");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const pointerRow = pointerToggle?.closest<HTMLElement>(
+    ".reading-focus-switch-row"
+  );
+  let currentPreferences = { ...initialPreferences };
 
   function render(preferences: Readonly<ReadingFocusPreferences>): void {
-    if (pointerToggle) pointerToggle.checked = preferences.enabled;
+    if (pointerToggle) {
+      pointerToggle.checked = preferences.enabled && !reducedMotion.matches;
+      pointerToggle.disabled = reducedMotion.matches;
+    }
+    pointerRow?.toggleAttribute("data-disabled", reducedMotion.matches);
     if (tocToggle) tocToggle.checked = preferences.highlightTocTarget;
     for (const input of styleInputs)
       input.checked = input.value === preferences.style;
@@ -55,32 +64,47 @@ export function bindReadingFocusControls({
     if (offsetValue) offsetValue.textContent = offset;
   }
 
+  function updatePreferences(patch: Partial<ReadingFocusPreferences>): void {
+    currentPreferences = { ...currentPreferences, ...patch };
+    onInput(patch);
+  }
+
+  reducedMotion.addEventListener(
+    "change",
+    () => {
+      render(currentPreferences);
+      onToggle();
+    },
+    { signal }
+  );
+
   menu.addEventListener(
     "input",
     event => {
       const input = event.target;
       if (!(input instanceof HTMLInputElement)) return;
-      if (input === pointerToggle) onInput({ enabled: input.checked });
+      if (input === pointerToggle)
+        updatePreferences({ enabled: input.checked });
       else if (input === tocToggle)
-        onInput({ highlightTocTarget: input.checked });
+        updatePreferences({ highlightTocTarget: input.checked });
       else if (
         input === durationInput &&
         Number.isFinite(input.valueAsNumber)
       ) {
-        onInput({ highlightDuration: input.valueAsNumber * 1000 });
+        updatePreferences({ highlightDuration: input.valueAsNumber * 1000 });
         if (durationValue) durationValue.textContent = input.value;
       } else if (
         input === offsetInput &&
         Number.isFinite(input.valueAsNumber)
       ) {
-        onInput({ headingOffsetPercent: input.valueAsNumber });
+        updatePreferences({ headingOffsetPercent: input.valueAsNumber });
         if (offsetValue) offsetValue.textContent = input.value;
       } else if (
         styleInputs.includes(input) &&
         input.checked &&
         isReadingFocusStyle(input.value)
       )
-        onInput({ style: input.value });
+        updatePreferences({ style: input.value });
     },
     { signal }
   );

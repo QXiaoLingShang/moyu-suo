@@ -51,14 +51,33 @@ const t = useTranslations(locale);
 </Layout>
 
 <script>
-  import { getInitialLang } from "@/i18n/client";
+  import { getInitialLang, getUIString } from "@/i18n/client";
   import { pagefindTranslations } from "@/i18n/pagefind";
+
+  const initializingSearchElements = new WeakSet<HTMLElement>();
+  const initializedSearchElements = new WeakSet<HTMLElement>();
+
+  function isCurrentSearchElement(element: HTMLElement): boolean {
+    return (
+      element.isConnected &&
+      document.querySelector("#pagefind-search") === element
+    );
+  }
 
   function initSearch() {
     const pageFindSearch: HTMLElement | null =
       document.querySelector("#pagefind-search");
 
-    if (!pageFindSearch) return;
+    if (!pageFindSearch || !isCurrentSearchElement(pageFindSearch)) return;
+    if (
+      initializedSearchElements.has(pageFindSearch) ||
+      initializingSearchElements.has(pageFindSearch)
+    )
+      return;
+    if (pageFindSearch.querySelector("form")) {
+      initializedSearchElements.add(pageFindSearch);
+      return;
+    }
 
     const bundlePath = pageFindSearch?.dataset?.bundlePath;
     if (!bundlePath) return;
@@ -68,55 +87,98 @@ const t = useTranslations(locale);
     const onIdle = window.requestIdleCallback || (cb => setTimeout(cb, 1));
 
     onIdle(async () => {
-      // @ts-expect-error — Missing types for @pagefind/default-ui package.
-      const { PagefindUI } = await import("@pagefind/default-ui");
+      if (initializingSearchElements.has(pageFindSearch)) return;
+      initializingSearchElements.add(pageFindSearch);
 
-      // Display warning inn dev mode
-      if (import.meta.env.DEV) {
-        pageFindSearch.innerHTML = `
-            <div class="bg-muted/75 rounded p-4 space-y-4 mb-4">
-              <p><strong>DEV mode Warning! </strong>You need to build the project at least once to see the search results during development.</p>
-              <code class="block bg-black text-white px-2 py-1 rounded">pnpm run build</code>
-            </div>
-          `;
-      }
+      try {
+        if (!isCurrentSearchElement(pageFindSearch)) return;
+        if (import.meta.env.DEV) {
+          const bundleBase = new URL(bundlePath, document.baseURI);
+          let hasIndex = false;
+          try {
+            const response = await fetch(new URL("pagefind.js", bundleBase), {
+              method: "HEAD",
+              cache: "no-store",
+            });
+            hasIndex = response.ok;
+          } catch {
+            // A missing local index is expected until the site has been built.
+          }
 
-      // Init pagefind ui
-      const search = new PagefindUI({
-        element: "#pagefind-search",
-        bundlePath,
-        showImages: false,
-        showSubResults: true,
-        // 中文 UI：Pagefind 无简体中文内置，用覆盖词典（切换语言后整页重载生效）
-        translations: pagefindTranslations(getInitialLang()),
-        processTerm: function (term: string) {
-          params.set("q", term); // Update the `q` parameter in the URL
-          history.replaceState(history.state, "", "?" + params.toString()); // Push the new URL without reloading
-
-          const backUrl =
-            pageFindSearch?.dataset?.backurl ?? window.location.pathname;
-          sessionStorage.setItem("backUrl", `${backUrl}?${params.toString()}`);
-
-          return term;
-        },
-      });
-
-      // If search param exists (eg: search?q=astro), trigger search
-      const query = params.get("q");
-      if (query) {
-        search.triggerSearch(query);
-      }
-
-      // Reset search param if search input is cleared
-      const searchInput = document.querySelector(".pagefind-ui__search-input");
-      const clearButton = document.querySelector(".pagefind-ui__search-clear");
-      searchInput?.addEventListener("input", resetSearchParam);
-      clearButton?.addEventListener("click", resetSearchParam);
-
-      function resetSearchParam(e: Event) {
-        if ((e.target as HTMLInputElement)?.value.trim() === "") {
-          history.replaceState(history.state, "", window.location.pathname);
+          if (!isCurrentSearchElement(pageFindSearch)) return;
+          if (!hasIndex) {
+            const warning = document.createElement("div");
+            warning.className = "bg-muted/75 mb-4 space-y-4 rounded p-4";
+            warning.setAttribute("role", "status");
+            const message = document.createElement("p");
+            message.dataset.i18n = "pages.searchIndexUnavailable";
+            message.textContent = getUIString("pages.searchIndexUnavailable");
+            const command = document.createElement("code");
+            command.className = "block rounded bg-black px-2 py-1 text-white";
+            command.textContent = "pnpm build";
+            warning.append(message, command);
+            pageFindSearch.replaceChildren(warning);
+            return;
+          }
         }
+
+        if (!isCurrentSearchElement(pageFindSearch)) return;
+        // @ts-expect-error — Missing types for @pagefind/default-ui package.
+        const { PagefindUI } = await import("@pagefind/default-ui");
+        // The route may have changed while the UI bundle was loading.
+        if (!isCurrentSearchElement(pageFindSearch)) return;
+        if (pageFindSearch.querySelector("form")) {
+          initializedSearchElements.add(pageFindSearch);
+          return;
+        }
+
+        // Init pagefind ui
+        const search = new PagefindUI({
+          element: "#pagefind-search",
+          bundlePath,
+          showImages: false,
+          showSubResults: true,
+          // 中文 UI：Pagefind 无简体中文内置，用覆盖词典（切换语言后整页重载生效）
+          translations: pagefindTranslations(getInitialLang()),
+          processTerm: function (term: string) {
+            params.set("q", term); // Update the `q` parameter in the URL
+            history.replaceState(history.state, "", "?" + params.toString()); // Push the new URL without reloading
+
+            const backUrl =
+              pageFindSearch?.dataset?.backurl ?? window.location.pathname;
+            sessionStorage.setItem(
+              "backUrl",
+              `${backUrl}?${params.toString()}`
+            );
+
+            return term;
+          },
+        });
+        initializedSearchElements.add(pageFindSearch);
+
+        // If search param exists (eg: search?q=astro), trigger search
+        const query = params.get("q");
+        if (query) {
+          search.triggerSearch(query);
+        }
+
+        // Reset search param if search input is cleared
+        const searchInput = document.querySelector(
+          ".pagefind-ui__search-input"
+        );
+        const clearButton = document.querySelector(
+          ".pagefind-ui__search-clear"
+        );
+        searchInput?.addEventListener("input", resetSearchParam);
+        clearButton?.addEventListener("click", resetSearchParam);
+
+        function resetSearchParam(e: Event) {
+          if ((e.target as HTMLInputElement)?.value.trim() === "") {
+            history.replaceState(history.state, "", window.location.pathname);
+          }
+        }
+      } finally {
+        initializingSearchElements.delete(pageFindSearch);
       }
     });
   }

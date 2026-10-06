@@ -56,6 +56,20 @@ export interface UIStrings {
   footer: {
     copyright: string;
     allRightsReserved: string;
+    rss: string;
+  };
+  readingFocus: {
+    title: string;
+    pointer: string;
+    style: string;
+    left: string;
+    right: string;
+    block: string;
+    toc: string;
+    hint: string;
+    duration: string;
+    offset: string;
+    seconds: string;
   };
   pages: {
     tagTitle: string;
@@ -72,6 +86,7 @@ export interface UIStrings {
 
     searchTitle: string;
     searchDesc: string;
+    searchIndexUnavailable: string;
   };
   a11y: {
     skipToContent: string;

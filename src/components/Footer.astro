@@ -1,7 +1,10 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import Socials from "./Socials.astro";
+import LinkButton from "./LinkButton.astro";
+import IconRss from "@/assets/icons/IconRss.svg";
 import { useTranslations } from "@/i18n";
+import { getAssetPath } from "@/utils/withBase";
 
 type Props = {
   noMarginTop?: boolean;
@@ -20,7 +23,21 @@ const currentYear = new Date().getFullYear();
   <div
     class="border-border flex flex-col items-center justify-between border-t py-6 sm:flex-row-reverse sm:py-4"
   >
-    <Socials />
+    <div class="flex items-center gap-1">
+      <LinkButton
+        href={getAssetPath("rss.xml")}
+        class="p-2 sm:p-1"
+        data-i18n-title="footer.rss"
+        title={t.footer.rss}
+      >
+        <IconRss
+          aria-hidden="true"
+          class="inline-block size-6 scale-125 fill-transparent stroke-current stroke-2 opacity-90 sm:scale-110"
+        />
+        <span class="sr-only" data-i18n="footer.rss">{t.footer.rss}</span>
+      </LinkButton>
+      <Socials />
+    </div>
     <div class="my-2 flex flex-col items-center whitespace-nowrap sm:flex-row">
       <span
         ><span data-i18n="footer.copyright">{t.footer.copyright}</span> &#169; {

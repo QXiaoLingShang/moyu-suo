@@ -19,6 +19,7 @@ export function createPointerFocus({
   isSuspended,
 }: PointerFocusOptions) {
   const hoverPointer = window.matchMedia("(any-hover: hover)");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const main = article.parentElement;
   const regions = createContentRegions(article);
   const overlay = document.createElement("div");
@@ -49,7 +50,7 @@ export function createPointerFocus({
     }
     // Hit testing belongs in the frame too: scroll can move content beneath a stationary pointer.
     const hit =
-      pointer && hoverPointer.matches
+      pointer && hoverPointer.matches && !reducedMotion.matches
         ? document.elementFromPoint(pointer.x, pointer.y)
         : keyboardTarget?.matches(":focus-visible")
           ? keyboardTarget
@@ -111,7 +112,8 @@ export function createPointerFocus({
         !getPreferences().enabled ||
         isSuspended() ||
         event.pointerType !== "mouse" ||
-        !hoverPointer.matches
+        !hoverPointer.matches ||
+        reducedMotion.matches
       )
         return;
       pointer = { x: event.clientX, y: event.clientY };
@@ -154,6 +156,14 @@ export function createPointerFocus({
   window.addEventListener("blur", forgetPointer, { signal });
   document.addEventListener("visibilitychange", forgetPointer, { signal });
   hoverPointer.addEventListener("change", forgetPointer, { signal });
+  reducedMotion.addEventListener(
+    "change",
+    () => {
+      pointer = null;
+      schedulePaint();
+    },
+    { signal }
+  );
   document.addEventListener(
     "scroll",
     event => {

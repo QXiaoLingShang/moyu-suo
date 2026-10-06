@@ -58,6 +58,20 @@ export default {
   footer: {
     copyright: "版权所有",
     allRightsReserved: "保留所有权利",
+    rss: "RSS 订阅",
+  },
+  readingFocus: {
+    title: "阅读聚焦",
+    pointer: "跟随鼠标聚焦",
+    style: "聚焦样式",
+    left: "左侧线",
+    right: "右侧线",
+    block: "区域高亮",
+    toc: "高亮目录跳转标题",
+    hint: "跟随功能需要可悬停的鼠标；系统启用减少动态效果时会暂时关闭。",
+    duration: "标题高亮时长",
+    offset: "跳转顶部留白",
+    seconds: "秒",
   },
   pages: {
     tagTitle: "标签",
@@ -74,6 +88,8 @@ export default {
 
     searchTitle: "搜索",
     searchDesc: "搜索任意文章……",
+    searchIndexUnavailable:
+      "开发环境中没有可用的 Pagefind 索引。运行 pnpm build 生成索引。",
   },
   a11y: {
     skipToContent: "跳到主要内容",

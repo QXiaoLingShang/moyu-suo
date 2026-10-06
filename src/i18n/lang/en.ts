@@ -58,6 +58,20 @@ export default {
   footer: {
     copyright: "Copyright",
     allRightsReserved: "All rights reserved.",
+    rss: "RSS feed",
+  },
+  readingFocus: {
+    title: "Reading focus",
+    pointer: "Follow pointer",
+    style: "Focus style",
+    left: "Left line",
+    right: "Right line",
+    block: "Highlight",
+    toc: "Highlight TOC target",
+    hint: "Pointer following needs a hover-capable mouse and is paused when reduced motion is requested.",
+    duration: "Heading highlight duration",
+    offset: "Space above target heading",
+    seconds: "s",
   },
   pages: {
     tagTitle: "Tag",
@@ -74,6 +88,8 @@ export default {
 
     searchTitle: "Search",
     searchDesc: "Search any article ...",
+    searchIndexUnavailable:
+      "No Pagefind index is available in development. Run pnpm build to generate it.",
   },
   a11y: {
     skipToContent: "Skip to content",
