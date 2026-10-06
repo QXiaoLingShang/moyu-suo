@@ -263,7 +263,11 @@ export function setupSiteHeader(): void {
           }
         );
         target.focus();
-        target.scrollIntoView({ behavior: "smooth" });
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches
+          ? "auto"
+          : "smooth";
+        target.scrollIntoView({ behavior });
       }
     });
   }

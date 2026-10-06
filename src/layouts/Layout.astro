@@ -103,7 +103,16 @@ const rssHref = getAssetPath("rss.xml");
     -->
     <script is:inline>
       (function () {
-        const stored = localStorage.getItem("theme");
+        let stored = null;
+        try {
+          stored = localStorage.getItem("theme-manual");
+          // Older versions also stored OS changes, so their value is ambiguous.
+          if (localStorage.getItem("theme") !== null)
+            localStorage.removeItem("theme");
+        } catch {
+          // System preference remains available if browser storage is blocked.
+        }
+        if (stored !== "dark" && stored !== "light") stored = null;
         const prefersDark = window.matchMedia(
           "(prefers-color-scheme: dark)"
         ).matches;
