@@ -506,7 +506,8 @@ export function createHomePointerTransitions({
   function enterTextMode(): void {
     pointer.dataset.mode = "text";
     glow.dataset.mode = "text";
-    setState("following");
+    // Text-cursor styling should not cancel an in-progress particle return.
+    if (state !== "gathering") setState("following");
     motion.setGlowTarget(motion.pointerPosition());
   }
 
