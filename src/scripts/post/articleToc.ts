@@ -7,14 +7,28 @@ type TocNode = {
 };
 
 export function setupArticleToc(article: HTMLElement): () => void {
+  const tocMobile = document.getElementById("article-toc-mobile");
+  const tocToggle = document.getElementById(
+    "article-toc-toggle"
+  ) as HTMLButtonElement | null;
   const toc = document.getElementById("article-toc");
   const tocScroll = document.getElementById("article-toc-scroll");
   const tocContent = document.getElementById("article-toc-content");
   const tocList = document.getElementById("article-toc-list");
   const tocProgress = document.getElementById("article-toc-progress");
 
-  if (!toc || !tocScroll || !tocContent || !tocList || !tocProgress)
+  if (
+    !tocMobile ||
+    !tocToggle ||
+    !toc ||
+    !tocScroll ||
+    !tocContent ||
+    !tocList ||
+    !tocProgress
+  )
     return () => {};
+  const tocMobileRoot = tocMobile;
+  const tocMobileToggle = tocToggle;
   const tocRoot = toc!;
   const tocScroller = tocScroll!;
   const tocContentRoot = tocContent!;
@@ -125,9 +139,46 @@ export function setupArticleToc(article: HTMLElement): () => void {
 
   const desktopQuery = window.matchMedia("(min-width: 80rem)");
   function syncVisibility(): void {
-    tocRoot.hidden = !desktopQuery.matches;
+    const isDesktop = desktopQuery.matches;
+    tocMobileRoot.hidden = false;
+    tocMobileToggle.hidden = isDesktop;
+    tocMobileToggle.setAttribute("aria-expanded", "false");
+    tocRoot.hidden = !isDesktop;
   }
   syncVisibility();
+
+  tocMobileToggle.addEventListener(
+    "click",
+    () => {
+      if (desktopQuery.matches) return;
+      const expanded = tocMobileToggle.getAttribute("aria-expanded") === "true";
+      tocMobileToggle.setAttribute("aria-expanded", String(!expanded));
+      tocRoot.hidden = expanded;
+      updateScrollEdges();
+      scheduleUpdate();
+    },
+    { signal }
+  );
+
+  document.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key !== "Escape" ||
+        event.defaultPrevented ||
+        desktopQuery.matches ||
+        !(event.target instanceof Node) ||
+        !tocMobileRoot.contains(event.target) ||
+        tocMobileToggle.getAttribute("aria-expanded") !== "true"
+      )
+        return;
+      tocMobileToggle.setAttribute("aria-expanded", "false");
+      tocRoot.hidden = true;
+      tocMobileToggle.focus();
+      updateScrollEdges();
+    },
+    { signal }
+  );
 
   function updateScrollEdges(): void {
     tocScroller.dataset.canScrollUp = String(tocScroller.scrollTop > 1);
@@ -141,7 +192,7 @@ export function setupArticleToc(article: HTMLElement): () => void {
   let frame = 0;
   function updateActiveHeading(): void {
     frame = 0;
-    if (!desktopQuery.matches) return;
+    if (tocRoot.hidden) return;
 
     const documentElement = document.documentElement;
     const atPageEnd =

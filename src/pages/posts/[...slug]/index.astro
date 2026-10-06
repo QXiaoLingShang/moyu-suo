@@ -170,6 +170,38 @@ const ogImage = ogImageUrl
 
     {config.features.readingFocus.enabled && <ReadingFocusMenu />}
 
+    <div id="article-toc-mobile" hidden>
+      <button
+        id="article-toc-toggle"
+        type="button"
+        aria-controls="article-toc"
+        aria-expanded="false"
+        hidden
+      >
+        <span data-i18n="post.onThisPage">{t.post.onThisPage}</span>
+        <span class="article-toc-mobile-icon" aria-hidden="true"></span>
+      </button>
+      <nav
+        id="article-toc"
+        aria-label={t.post.articleContents}
+        data-i18n-aria-label="post.articleContents"
+        data-expand-label={t.post.expandTocSection}
+        data-collapse-label={t.post.collapseTocSection}
+        hidden
+      >
+        <h2 id="article-toc-title" data-i18n="post.onThisPage">
+          {t.post.onThisPage}
+        </h2>
+        <div id="article-toc-scroll">
+          <div id="article-toc-content">
+            <span id="article-toc-track" aria-hidden="true"></span>
+            <span id="article-toc-progress" aria-hidden="true"></span>
+            <ul id="article-toc-list"></ul>
+          </div>
+        </div>
+      </nav>
+    </div>
+
     <article
       id="article"
       data-show-sidenotes={String(config.features.showSidenotes)}
@@ -214,26 +246,6 @@ const ogImage = ogImageUrl
 
     <AdjacentPostNav {prevPost} {nextPost} />
   </main>
-
-  <nav
-    id="article-toc"
-    aria-label={t.post.articleContents}
-    data-i18n-aria-label="post.articleContents"
-    data-expand-label={t.post.expandTocSection}
-    data-collapse-label={t.post.collapseTocSection}
-    hidden
-  >
-    <h2 id="article-toc-title" data-i18n="post.onThisPage">
-      {t.post.onThisPage}
-    </h2>
-    <div id="article-toc-scroll">
-      <div id="article-toc-content">
-        <span id="article-toc-track" aria-hidden="true"></span>
-        <span id="article-toc-progress" aria-hidden="true"></span>
-        <ul id="article-toc-list"></ul>
-      </div>
-    </div>
-  </nav>
 
   <Footer />
 </PostLayout>
