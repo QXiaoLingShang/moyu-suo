@@ -50,8 +50,7 @@ export function setupArticleToc(article: HTMLElement): () => void {
   const links = new Map<string, HTMLAnchorElement>();
   const initialExpandLabel = tocRoot.dataset.expandLabel ?? "Expand";
   const initialCollapseLabel = tocRoot.dataset.collapseLabel ?? "Collapse";
-  let expandLabel =
-    getUIString("post.expandTocSection") || initialExpandLabel;
+  let expandLabel = getUIString("post.expandTocSection") || initialExpandLabel;
   let collapseLabel =
     getUIString("post.collapseTocSection") || initialCollapseLabel;
   let childListCount = 0;
@@ -120,11 +119,9 @@ export function setupArticleToc(article: HTMLElement): () => void {
   }
 
   appendNodes(roots, tocListRoot);
-  document.addEventListener(
-    UI_LANGUAGE_CHANGE_EVENT,
-    updateToggleLabels,
-    { signal }
-  );
+  document.addEventListener(UI_LANGUAGE_CHANGE_EVENT, updateToggleLabels, {
+    signal,
+  });
 
   const desktopQuery = window.matchMedia("(min-width: 80rem)");
   function syncVisibility(): void {
