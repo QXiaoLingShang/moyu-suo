@@ -20,6 +20,7 @@ export default defineAstroPaperConfig({
     dir: "ltr",
   },
   posts: {
+    // 保持文章归档每页密度稳定；末页较短属于预期行为。
     perPage: 4,
     perIndex: 4,
     scheduledPostMargin: 15 * 60 * 1000,

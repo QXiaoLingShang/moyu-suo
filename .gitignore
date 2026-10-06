@@ -38,6 +38,8 @@ _site/
 # docs
 docs/**
 !docs/TODO.md
+!docs/engineering/
+!docs/engineering/**
 # 临时复现/实验环境（不入库）
 tmp/
 
