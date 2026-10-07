@@ -48,14 +48,16 @@ export function setupArticleContentEnhancements(
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
 
-    const hasFileNameOffset =
-      getComputedStyle(block).getPropertyValue("--file-name-offset").trim() !==
-      "";
-    const topClass = hasFileNameOffset ? "top-(--file-name-offset)" : "-top-3";
+    const fileNameOffset = getComputedStyle(block)
+      .getPropertyValue("--file-name-offset")
+      .trim();
 
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `copy-code absolute end-3 ${topClass} rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium`;
+    button.className =
+      "copy-code absolute end-3 -top-3 rounded bg-muted border border-muted px-2 py-1 text-xs leading-4 text-foreground font-medium";
+    // The button is a sibling of pre, so it cannot inherit pre's offset variable.
+    if (fileNameOffset) button.style.top = fileNameOffset;
     setCopyButtonPhrase(button, "post.copyCode");
     const originalTabIndex = block.getAttribute("tabindex");
     block.setAttribute("tabindex", "0");
