@@ -2,7 +2,7 @@
 title: 初探 astro
 pubDatetime: 2026-09-04T23:30:00+08:00
 description: 记录我通过阅读 Astro 官方教程和示例仓库，初步了解 .astro 文件的组件结构。
-draft: false
+draft: true
 tags:
   - astro
 aiGenerated: true
