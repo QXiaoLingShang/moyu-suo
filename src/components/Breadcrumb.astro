@@ -24,36 +24,41 @@ const decodeSegment = (value: string) => {
   }
 };
 
-const navLabels: Record<string, string> = {
-  posts: t.nav.posts,
-  tags: t.nav.tags,
-  about: t.nav.about,
-  archives: t.nav.archives,
-  search: t.nav.search,
+const navKeys: Record<string, keyof typeof t.nav> = {
+  posts: "posts",
+  tags: "tags",
+  about: "about",
+  archives: "archives",
+  search: "search",
 };
 
-// if breadcrumb is Home > Posts > [page] <etc>
-// replace Posts with localized "Posts (page number)"
+type BreadcrumbItem = {
+  label: string;
+  key?: string;
+  path: string;
+  page?: string;
+};
+
+// Only route labels own UI keys; a tag named "posts" is still content.
+const breadcrumbs: BreadcrumbItem[] = breadcrumbList.map((segment, index) => {
+  const key = index === 0 ? navKeys[segment] : undefined;
+  return {
+    label: key ? t.nav[key] : decodeSegment(segment),
+    key: key && `nav.${key}`,
+    path: segment,
+  };
+});
+
 if (breadcrumbList[0] === "posts") {
-  breadcrumbList.splice(
-    0,
-    2,
-    `${t.nav.posts} (${t.pagination.page.toLowerCase()} ${breadcrumbList[1] || 1})`
-  );
+  breadcrumbs[0].page = breadcrumbList[1] || "1";
+  breadcrumbs.splice(1, 1);
 }
 
-// if breadcrumb is Home > Tags > [tag] > [page] <etc>
-// replace [tag] > [page] with localized [tag] (page number)
 if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
-  breadcrumbList.splice(
-    1,
-    3,
-    `${decodeSegment(breadcrumbList[1])} ${
-      Number(breadcrumbList[2]) === 1
-        ? ""
-        : `(${t.pagination.page.toLowerCase()} ${breadcrumbList[2]})`
-    }`
-  );
+  if (Number(breadcrumbList[2]) !== 1) {
+    breadcrumbs[1].page = breadcrumbList[2];
+  }
+  breadcrumbs.splice(2, 1);
 }
 ---
 
@@ -72,26 +77,33 @@ if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
       <span aria-hidden="true" class="opacity-80">&raquo;</span>
     </li>
     {
-      breadcrumbList.map((breadcrumb, index) =>
-        index + 1 === breadcrumbList.length ? (
+      breadcrumbs.map((breadcrumb, index) =>
+        index + 1 === breadcrumbs.length ? (
           <li>
             <span
               class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
               aria-current="page"
-              data-i18n-phrase
             >
               {/* make the last part lowercase in Home > Tags > some-tag */}
-              {navLabels[breadcrumb] ?? decodeSegment(breadcrumb)}
+              <span data-i18n={breadcrumb.key}>{breadcrumb.label}</span>
+              {breadcrumb.page && (
+                <>
+                  {" ("}
+                  <span data-i18n="pagination.page" class="lowercase">
+                    {t.pagination.page.toLowerCase()}
+                  </span>
+                  {` ${breadcrumb.page})`}
+                </>
+              )}
             </span>
           </li>
         ) : (
           <li class="flex items-center gap-x-1">
             <a
-              href={getRelativeLocaleUrl(locale, breadcrumb)}
+              href={getRelativeLocaleUrl(locale, breadcrumb.path)}
               class="capitalize opacity-70"
-              data-i18n-phrase
             >
-              {navLabels[breadcrumb] ?? decodeSegment(breadcrumb)}
+              <span data-i18n={breadcrumb.key}>{breadcrumb.label}</span>
             </a>
             <span aria-hidden="true" class="opacity-70">
               &raquo;

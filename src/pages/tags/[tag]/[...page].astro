@@ -11,7 +11,7 @@ import Pagination from "@/components/Pagination.astro";
 import { getUniqueTags } from "@/utils/getUniqueTags";
 import { getSortedPosts } from "@/utils/getSortedPosts";
 import { slugifyAll } from "@/utils/slugify";
-import { useTranslations } from "@/i18n";
+import { tplStr, useTranslations } from "@/i18n";
 import config from "@/config";
 
 export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
@@ -36,22 +36,25 @@ const { page, tagName } = Astro.props;
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
+const tagParams = { tag: tagName };
 ---
 
 <Layout
-  title={`${t.pages.tagTitle}: ${tagName} | ${config.site.title}`}
-  titlePhraseKey="pages.tagTitle"
+  title={`${tplStr(t.pages.tagTitle, tagParams)} | ${config.site.title}`}
+  titleKey="pages.tagTitle"
+  titleParams={tagParams}
 >
   <Header />
 
   <Breadcrumb />
 
   <Main
-    pageTitle={`${t.pages.tagTitle}: ${tagName}`}
-    pageDesc={`${t.pages.tagDesc} "${tagName}".`}
-    phraseTitle
-    phraseTitleKey="pages.tagTitle"
-    phraseDesc
+    pageTitle={tplStr(t.pages.tagTitle, tagParams)}
+    pageDesc={tplStr(t.pages.tagDesc, tagParams)}
+    pageTitleKey="pages.tagTitle"
+    pageTitleParams={tagParams}
+    pageDescKey="pages.tagDesc"
+    pageDescParams={tagParams}
   >
     <ul>
       {page.data.map(data => <Card {...data} />)}

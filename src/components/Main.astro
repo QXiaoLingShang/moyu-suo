@@ -7,9 +7,8 @@ type Props = {
   pageDesc?: string;
   pageTitleKey?: string;
   pageDescKey?: string;
-  phraseTitle?: boolean;
-  phraseTitleKey?: string;
-  phraseDesc?: boolean;
+  pageTitleParams?: Record<string, string | number>;
+  pageDescParams?: Record<string, string | number>;
   transitionName?: string;
   class?: string;
 };
@@ -19,9 +18,8 @@ const {
   pageDesc,
   pageTitleKey,
   pageDescKey,
-  phraseTitle,
-  phraseTitleKey,
-  phraseDesc,
+  pageTitleParams,
+  pageDescParams,
   transitionName,
   class: className,
 } = Astro.props;
@@ -41,15 +39,14 @@ const backUrl = config.features.showBackButton
     transition:name={transitionName}
     class="text-2xl font-semibold sm:text-3xl"
     data-i18n={pageTitleKey || undefined}
-    data-i18n-phrase={phraseTitle || undefined}
-    data-i18n-phrase-key={phraseTitleKey || undefined}
+    data-i18n-params={pageTitleParams && JSON.stringify(pageTitleParams)}
   >
     {pageTitle}
   </h1>
   <p
     class="mt-2 mb-6 italic"
     data-i18n={pageDescKey || undefined}
-    data-i18n-phrase={phraseDesc || undefined}
+    data-i18n-params={pageDescParams && JSON.stringify(pageDescParams)}
   >
     {pageDesc}
   </p>

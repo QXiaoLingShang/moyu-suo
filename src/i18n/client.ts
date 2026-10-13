@@ -8,10 +8,11 @@
  *
  * 与服务器端无关：字典（en / zh-CN）全部随 bundle 打进客户端。
  */
-import en from "./lang/en";
-import zhCN from "./lang/zh-CN";
-import { formatDate, formatShortDate } from "@/utils/formatDate";
-import type { UILang } from "@/utils/formatDate";
+import en from "./lang/en.ts";
+import zhCN from "./lang/zh-CN.ts";
+import { tplStr } from "./format.ts";
+import { formatDate, formatShortDate } from "../utils/formatDate.ts";
+import type { UILang } from "../utils/formatDate.ts";
 
 export type LangCode = "zh-CN" | "en";
 
@@ -44,53 +45,22 @@ function getByPath(obj: unknown, path: string): string {
   return typeof cur === "string" ? cur : "";
 }
 
-type PhrasePair = { path: string; f: string; t: string };
-
-function collectLeafEntries(dict: object): Map<string, string> {
-  const entries = new Map<string, string>();
-  const walk = (node: object, parentPath = "") => {
-    for (const [key, value] of Object.entries(node)) {
-      const path = parentPath ? `${parentPath}.${key}` : key;
-      if (typeof value === "string") entries.set(path, value);
-      else if (value && typeof value === "object") walk(value, path);
-    }
-  };
-  walk(dict);
-  return entries;
-}
-
-function getPhrasePairs(
-  from: LangCode,
-  to: LangCode,
-  preferredPath?: string
-): PhrasePair[] {
-  const source = collectLeafEntries(DICTS[from]);
-  const target = collectLeafEntries(DICTS[to]);
-  return [...source.entries()]
-    .flatMap(([path, f]) => {
-      const t = target.get(path);
-      return t && f !== t ? [{ path, f, t }] : [];
-    })
-    .sort((a, b) => {
-      const lengthOrder = b.f.length - a.f.length;
-      if (lengthOrder !== 0) return lengthOrder;
-      if (a.path === preferredPath) return -1;
-      if (b.path === preferredPath) return 1;
-      return 0;
-    });
-}
-
-/** 文档标题短语替换：源语言叶子值（长→短）→ 目标语言叶子值 */
-function swapDocumentTitle(from: LangCode, to: LangCode) {
-  const preferredPath = document
-    .querySelector("title")
-    ?.getAttribute("data-i18n-phrase-key");
-  const pairs = getPhrasePairs(from, to, preferredPath || undefined);
-  let title = document.title;
-  for (const { f, t } of pairs) {
-    if (title.includes(f)) title = title.split(f).join(t);
+/** Parameters are content, so interpolate them only after selecting the UI template. */
+function getTextParams(el: HTMLElement): Record<string, string | number> {
+  const raw = el.getAttribute("data-i18n-params");
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+      return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        ([, value]) => typeof value === "string" || typeof value === "number"
+      )
+    );
+  } catch {
+    return {};
   }
-  document.title = title;
 }
 
 let currentLang: LangCode = "zh-CN";
@@ -122,23 +92,6 @@ export function getInitialLang(): LangCode {
   return readStored();
 }
 
-/**
- * 短语替换：把容器内文本节点里出现的「源语言字典叶子值」整体替换为目标值。
- * 用于面包屑这类「字典词 + 数字/括号/内容词」拼接的场景，长词优先避免子串误伤。
- */
-function phraseReplace(el: HTMLElement, pairs: { f: string; t: string }[]) {
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  const nodes: Text[] = [];
-  while (walker.nextNode()) nodes.push(walker.currentNode as Text);
-  for (const node of nodes) {
-    let text = node.data;
-    for (const { f, t } of pairs) {
-      if (text.includes(f)) text = text.split(f).join(t);
-    }
-    if (text !== node.data) node.data = text;
-  }
-}
-
 /** 把整页 UI 文案应用到指定语言（DOM 已按该语言渲染时安全无操作） */
 export function applyLang(target: LangCode) {
   const dict = DICTS[target];
@@ -146,8 +99,12 @@ export function applyLang(target: LangCode) {
   document.querySelectorAll<HTMLElement>("[data-i18n]").forEach(el => {
     const key = el.getAttribute("data-i18n");
     if (!key) return;
-    const value = getByPath(dict, key);
-    if (value && el.textContent !== value) el.textContent = value;
+    const template = getByPath(dict, key);
+    if (!template) return;
+    const value =
+      tplStr(template, getTextParams(el)) +
+      (el.getAttribute("data-i18n-suffix") ?? "");
+    if (el.textContent !== value) el.textContent = value;
   });
 
   document.querySelectorAll<HTMLElement>("[data-i18n-title]").forEach(el => {
@@ -168,17 +125,6 @@ export function applyLang(target: LangCode) {
       if (value) el.setAttribute("aria-label", value);
     });
 
-  const fromCode: LangCode = target === "en" ? "zh-CN" : "en";
-  const pairs = getPhrasePairs(fromCode, target);
-
-  document.querySelectorAll<HTMLElement>("[data-i18n-phrase]").forEach(el => {
-    const preferredPath = el.dataset.i18nPhraseKey;
-    phraseReplace(
-      el,
-      preferredPath ? getPhrasePairs(fromCode, target, preferredPath) : pairs
-    );
-  });
-
   // 日期：按目标语言与元素自带时区重算（与 SSR 同规则，见 utils/formatDate）
   document.querySelectorAll<HTMLElement>("[data-i18n-date]").forEach(el => {
     const iso = el.getAttribute("datetime");
@@ -193,7 +139,6 @@ export function applyLang(target: LangCode) {
   });
 
   document.documentElement.lang = target === "en" ? "en" : "zh-CN";
-  swapDocumentTitle(fromCode, target);
 
   currentLang = target;
   document.dispatchEvent(new Event(UI_LANGUAGE_CHANGE_EVENT));

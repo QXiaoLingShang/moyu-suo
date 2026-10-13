@@ -74,8 +74,8 @@ export default {
     seconds: "s",
   },
   pages: {
-    tagTitle: "Tag",
-    tagDesc: "All the articles with the tag",
+    tagTitle: "Tag: {{tag}}",
+    tagDesc: 'All the articles with the tag "{{tag}}".',
 
     tagsTitle: "Tags",
     tagsDesc: "All the tags used in posts.",

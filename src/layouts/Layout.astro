@@ -9,7 +9,8 @@ import "katex/dist/katex.min.css";
 
 type Props = {
   title?: string;
-  titlePhraseKey?: string;
+  titleKey?: string;
+  titleParams?: Record<string, string | number>;
   description?: string;
   ogImage?: string;
   canonicalURL?: string;
@@ -19,7 +20,8 @@ const { site } = config;
 
 const {
   title = site.title,
-  titlePhraseKey,
+  titleKey,
+  titleParams,
   description = site.description,
   ogImage = resolveDefaultOgImagePath(config),
   canonicalURL = new URL(Astro.url.pathname, Astro.site).href,
@@ -53,7 +55,13 @@ const rssHref = getAssetPath("rss.xml");
     />
 
     <!-- Primary meta -->
-    <title data-i18n-phrase-key={titlePhraseKey}>{title}</title>
+    <title
+      data-i18n={titleKey}
+      data-i18n-params={titleParams && JSON.stringify(titleParams)}
+      data-i18n-suffix={titleKey && ` | ${site.title}`}
+    >
+      {title}
+    </title>
     <meta name="title" content={title} />
     <meta name="description" content={description} />
     <meta name="author" content={site.author} />

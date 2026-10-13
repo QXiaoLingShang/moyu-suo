@@ -74,8 +74,8 @@ export default {
     seconds: "秒",
   },
   pages: {
-    tagTitle: "标签",
-    tagDesc: "带有该标签的全部文章",
+    tagTitle: "标签: {{tag}}",
+    tagDesc: '带有该标签的全部文章 "{{tag}}".',
 
     tagsTitle: "标签",
     tagsDesc: "文章中使用的全部标签",
