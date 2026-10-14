@@ -1,8 +1,8 @@
 ---
-title: Codeforces Round 1127（Div. 2）题解草稿
+title: Codeforces Round 1127（Div. 2）复盘
 pubDatetime: 2026-10-12T00:00:00+08:00
 description: 赛时4题，简要分析了ABCD四题的思路，补充E题赛后讨论的做法。
-draft: true
+draft: false
 excludeFromRss: true
 tags:
   - OI日记

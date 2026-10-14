@@ -1,5 +1,5 @@
 ---
-title: Codeforces Round 1123（Div. 2）题解草稿
+title: Codeforces Round 1123（Div. 2）复盘
 pubDatetime: 2026-09-27T00:00:00+08:00
 description: 赛时4题，简要分析了ABCD四题得思路
 draft: false

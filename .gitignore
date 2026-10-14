@@ -42,6 +42,7 @@ docs/**
 !docs/engineering/**
 # 临时复现/实验环境（不入库）
 tmp/
+output/
 
 # Local browser verification artifacts
 output/playwright/
