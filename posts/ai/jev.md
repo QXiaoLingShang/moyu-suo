@@ -97,7 +97,63 @@ Jev 是 TypeSafe 上个月发布的闭源 System One 模型[^system-one]，面�
 2. **官方有限速**：对普通用户来说，每秒最多只能并发 80 个请求，且输入限流 100,000 tokens/s。[^rate-limit]
 3. **判断依据不透明**：普通 LLM 至少还能生成一段自我解释（至于是否忠实反映了真实判断过程，另说）；Jev 直接返回结构化结果。你知道它给了多少分，却不知道这个分数具体是怎么来的、依据是什么。
 
-貌似就没别的了。该说的应该都说完了，就这样吧。
+## 这不就是分类器吗？
+
+不过，写到这里，做过 NLP 的人可能已经觉得眼熟了：文本进去，类别概率出来——这不就是分类器吗？
+
+确实。比如当年常用的 BERT，接个分类头微调一下，就能做成一个基于 Transformer 的分类模型。输入文本，直接算出类别概率，不需要逐字生成解释。[^bert]
+
+![BERT 情感分类流程示意](./assest/jev-bert.png)
+
+如图，输入一句“这手机用了两天就坏了”，交给针对情感分类微调过的 BERT，就能得到好评、中评、差评各自的概率。程序拿着结果，就可以继续筛选、排序或者触发后续操作。
+
+所以，**“把难以写死规则的判断变成程序能处理的分数”，这件事早就有人在做了。**
+
+但这类分类器有个实际问题：**任务变了，通常就得重新适配。** 针对情感分析训出来的模型，想改成判断售后诉求，一般还得准备对应的标注数据、重新微调，没法改几个标签名字就指望它理解新任务。
+
+而 Jev 可以在调用时直接接收问题、判断标准和选项。同一段文本，这次问情绪，下次就能换成判断诉求，不需要为当前任务重新训练——也就是 zero-shot（零样本）能力。
+
+那，新意就在这里吗？
+
+**零样本分类，也早就有了。**
+
+比如基于 NLI（自然语言推断）的分类方法，可以把“这手机用了两天就坏了”和“这是一条负面评价”一起交给模型，判断前一句是否支持后一句。换成“用户想要退货”，就相当于换了一个待判断的说法，不需要为新标签重新训练。2020 年 Hugging Face 就已经提供了这样的零样本分类 pipeline。[^zero-shot]
+
+再近一点，Jev 发布前就有开源的 [GLiClass](https://github.com/Knowledgator/GLiClass)：标签可以临时传入，还能在一次前向计算里处理多个标签。动态标签、直接打分、跳过长文本生成，这些思路都有前例。[^gliclass]
+
+看到这里，也就不难理解为什么有人对 Jev 的走红感到困惑。
+
+HN 用户 Oras 说，他拿 Jev 试了原本交给 Gemini 的分类任务，觉得更快、更便宜，一致性也不错；但作为以前训练过 NLP 模型的人，他的评价是：
+
+> it's just BERT with more data.
+
+[![Oras 在 Hacker News 上讨论 Jev 的原评论](./assest/jev-comment-oras.png)](https://news.ycombinator.com/item?id=49765997)
+
+他认可现成分类服务的价值，却不认为这是一次突破。[^oras]
+
+不过，**“这些功能早就有了”和“Jev 内部就是 BERT 加数据”，仍然是两回事。** 前者有现成的方法和项目可以对照，后者目前还缺少公开的实现证据。
+
+那，前面测出来的速度和价格优势怎么算？
+
+当然算。1.35 秒找到位置，和等 Agent 搜索、读取、折腾几十秒，对使用者来说差别很实际。
+
+**但别忘了，前文对比的是 Jev 的语义打分流程，和通用大模型调用工具查找文档的流程。** 这说明 Jev 在这次任务里确实更快、更便宜，却不能直接证明它相比已有分类技术进步了多少。
+
+要回答后一个问题，就得把已有的分类器也摆上来，同时比一比判断质量、延迟和成本。拿一个任务固定、文本很短的 BERT 分类器跑出毫秒级结果，不能直接宣布 Jev 多余；反过来，拿 Jev 比生成式大模型快几十倍，也不能宣布分类技术因此发生了革命。
+
+Mikhail Parakhin 前后发过两条评论。他先调侃：ChatGPT 之后才接触 AI 的人像发现了火，早年的 ML 从业者却困惑这为什么能成为新闻；两天后他又补充说，这里面的数据部分可能最关键，自己也在琢磨，怎样收集数据才能获得类似 Jev 的泛化能力。[^parakhin]
+
+[![Mikhail Parakhin 对 Jev 走红的最初评论](./assest/jev-comment-parakhin-first.jpg)](https://x.com/MParakhin/status/2101036299721347073)
+
+[![Mikhail Parakhin 关于 Jev 数据与泛化能力的后续评论](./assest/jev-comment-parakhin-second.jpg)](https://x.com/MParakhin/status/2101683565520199887)
+
+**功能形态有前例，不意味着做到同样的效果很容易。** 至于 Jev 的具体提升来自数据、训练方法、模型结构还是服务工程，目前公开的资料还没细说。
+
+说到底，Jev 的走红也提醒了一件事：**在大家习惯了什么都交给生成式大模型之后，分类器这套老东西，又重新回到了视野里。**
+
+它确实好用，前面的几个场景也确实值得尝试。但既然功能早有前例、具体实现又尚未公开，现在就宣布一个全新技术方向，多少有点着急。
+
+至于最后会不会长出一串 Open-Jev、Mini-Jev、Awesome-Jev……那就是另一个故事了。
 
 ---
 
@@ -113,6 +169,16 @@ Jev 是 TypeSafe 上个月发布的闭源 System One 模型[^system-one]，面�
 
 [^rate-limit]: 这是组织级额度，同一组织下的 API keys 共用。实际额度以控制台为准；官方说明见[模型文档](https://docs.typesafe.ai/models)。
 
+[^bert]: 见 [BERT 原论文](https://arxiv.org/abs/1810.04805) §3.2、§4.1。图中概率仅为示意。
+
+[^zero-shot]: 见 Hugging Face 社区的[零样本分类 pipeline 发布帖](https://discuss.huggingface.co/t/new-pipeline-for-zero-shot-text-classification/681)及 Joe Davison 的[介绍文章](https://joeddav.github.io/blog/2020/05/29/ZSL.html)。这里利用的是已训练好的 NLI 模型。
+
+[^gliclass]: 见 [GLiClass 论文](https://arxiv.org/abs/2508.07662)及[开源实现](https://github.com/Knowledgator/GLiClass)。功能形态相近，不代表处理长上下文或复杂判断标准的能力相同。
+
+[^oras]: 见 Oras 在 Hacker News 的[原评论](https://news.ycombinator.com/item?id=49765997)。
+
+[^parakhin]: 见 Mikhail Parakhin 的[最初评论](https://x.com/MParakhin/status/2101036299721347073)与[后续推文](https://x.com/MParakhin/status/2101683565520199887)。
+
 ## 参考文献
 
 1. DeskMind. [DeskMind Launch Blog](https://deskmind.dev/zh/blog/launch/). 查阅于 2026-10-17.
@@ -124,6 +190,6 @@ Jev 是 TypeSafe 上个月发布的闭源 System One 模型[^system-one]，面�
 7. Lagnajit09. [sgrep](https://github.com/Lagnajit09/sgrep). 查阅于 2026-10-17.
 8. hotchpotch. [jev-reranker](https://github.com/hotchpotch/jev-reranker). 查阅于 2026-10-17.
 9. DeepSeek. [模型 & 价格](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/). 查阅于 2026-10-17.
-
-
-
+10. Jacob Devlin et al. [BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding](https://arxiv.org/abs/1810.04805). NAACL, 2019.
+11. Joe Davison. [Zero-Shot Learning in Modern NLP](https://joeddav.github.io/blog/2020/05/29/ZSL.html). 2020-05-29.
+12. Ihor Stepanov et al. [GLiClass: Generalist Lightweight Model for Sequence Classification Tasks](https://arxiv.org/abs/2508.07662). arXiv, 2025.
