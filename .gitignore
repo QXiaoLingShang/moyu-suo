@@ -40,6 +40,8 @@ docs/**
 !docs/TODO.md
 !docs/engineering/
 !docs/engineering/**
+!docs/readme/
+!docs/readme/**
 # 临时复现/实验环境（不入库）
 tmp/
 output/

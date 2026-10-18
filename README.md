@@ -13,6 +13,8 @@
   </a>
   <img alt="Astro 7" src="https://img.shields.io/badge/Astro-7-BC52EE?style=flat-square&logo=astro&logoColor=white" />
   <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" />
+  <img alt="Markdown / MDX" src="https://img.shields.io/badge/Markdown%20%2F%20MDX-文章格式-083FA1?style=flat-square&logo=markdown&logoColor=white" />
+  <img alt="Pagefind" src="https://img.shields.io/badge/Pagefind-站内搜索-4B32C3?style=flat-square" />
 </p>
 
 ## 关于本站
@@ -30,16 +32,6 @@
 - 文章图片可放大查看；支持 RSS 订阅
 - 可设置的[阅读聚焦](src/scripts/reading-focus/README.md)：鼠标跟随强调线或区域高亮、目录跳转标题提示
 - 静态生成并部署到 GitHub Pages
-
-## 技术栈
-
-| 用途     | 技术                                     |
-| -------- | ---------------------------------------- |
-| 站点生成 | [Astro](https://astro.build/)            |
-| 样式     | [Tailwind CSS](https://tailwindcss.com/) |
-| 文章格式 | Markdown / MDX                           |
-| 站内搜索 | [Pagefind](https://pagefind.app/)        |
-| 部署     | GitHub Actions + GitHub Pages            |
 
 ## 本地预览
 
@@ -65,17 +57,25 @@ pnpm preview  # 本地预览构建结果
 
 推送到 `main` 后，GitHub Actions 会构建站点并发布到 GitHub Pages。
 
+![文章经 Astro 构建、Pagefind 建立搜索索引，再由 GitHub Pages 发布](docs/readme/publishing-flow.png)
+
 ## 仓库结构
 
-| 路径                                                           | 内容                                    |
-| -------------------------------------------------------------- | --------------------------------------- |
-| [`posts/`](posts/)                                             | 博客文章、文章插图和写作模板            |
-| [`src/`](src/)                                                 | 页面、组件、样式和站点功能              |
-| [`public/`](public/)                                           | favicon、默认社交分享图等静态资源       |
-| [`astro-paper.config.ts`](astro-paper.config.ts)               | 站点标题、作者、语言和功能配置          |
-| [`astro.config.ts`](astro.config.ts)                           | Astro 构建、Markdown 处理和部署路径配置 |
-| [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) | GitHub Pages 自动部署流程               |
+```text
+moyu-suo/
+├── posts/                  博客文章、插图和写作模板
+├── src/                    页面、组件、样式和站点功能
+├── public/                 favicon、默认社交分享图等静态资源
+├── docs/readme/            README 架构图及可编辑源文件
+├── astro-paper.config.ts   站点标题、作者、语言和功能配置
+├── astro.config.ts         Astro、Markdown 处理和部署路径配置
+└── .github/workflows/      GitHub Pages 自动部署流程
+```
 
 ## 致谢
 
-本站使用 [AstroPaper](https://github.com/satnaing/astro-paper) 作为主题基础。感谢 [Sat Naing](https://github.com/satnaing) 开源这个主题；主题代码遵循仓库中的 MIT License。
+本站使用 [AstroPaper](https://github.com/satnaing/astro-paper) 作为主题基础。感谢 [Sat Naing](https://github.com/satnaing) 开源这个主题。文章插图使用 [Excalidraw](https://excalidraw.com/) 绘制，并通过[官方 CLI](https://github.com/excalidraw/cli)导出，感谢 Excalidraw 社区。
+
+## License
+
+本项目遵循 MIT License，详见 [LICENSE](LICENSE)。
