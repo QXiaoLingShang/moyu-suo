@@ -93,7 +93,7 @@ const navigationGroupLabels = t.navigationGroups;
 <a
   id="skip-to-content"
   href="#main-content"
-  class="bg-background text-accent absolute inset-s-16 -top-full z-[70] px-3 py-2 backdrop-blur-lg transition-all focus:top-4"
+  class="bg-background text-accent absolute inset-s-16 -top-full z-[var(--z-skip-link)] px-3 py-2 backdrop-blur-lg transition-all focus:top-4"
 >
   {t.a11y.skipToContent}
 </a>
@@ -101,7 +101,7 @@ const navigationGroupLabels = t.navigationGroups;
 <header
   transition:name="site-header"
   class:list={[
-    "app-layout relative z-50 flex flex-col items-center justify-between sm:flex-row",
+    "app-layout relative z-[var(--z-navigation)] flex flex-col items-center justify-between sm:flex-row",
     { "site-header--wide": wide },
     { "site-header--compact": !wide },
   ]}
@@ -117,11 +117,11 @@ const navigationGroupLabels = t.navigationGroups;
     </a>
     <nav
       id="nav-menu"
-      class="relative z-50 flex w-full flex-col items-center sm:static sm:z-auto sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
+      class="relative z-[var(--z-navigation)] flex w-full flex-col items-center sm:static sm:z-auto sm:ms-2 sm:flex-row sm:justify-end sm:space-x-4 sm:py-0"
     >
       <button
         id="menu-btn"
-        class="site-nav__trigger focus-outline relative z-[60] self-end p-2"
+        class="site-nav__trigger focus-outline relative z-[var(--z-popover)] self-end p-2"
         aria-label={t.a11y.openMenu}
         aria-expanded="false"
         aria-controls="menu-items"
@@ -142,7 +142,7 @@ const navigationGroupLabels = t.navigationGroups;
         id="menu-items"
         class:list={[
           "site-nav__items border-border bg-background",
-          "pointer-events-none fixed inset-x-0 top-[4.5rem] bottom-0 z-50 grid w-full grid-cols-6 content-start gap-x-2 gap-y-0 overflow-y-auto overscroll-contain px-8 pt-6 pb-24",
+          "pointer-events-none fixed inset-x-0 top-[4.5rem] bottom-0 z-[var(--z-navigation)] grid w-full grid-cols-6 content-start gap-x-2 gap-y-0 overflow-y-auto overscroll-contain px-8 pt-6 pb-24",
           "translate-y-2 opacity-0 transition-[opacity,transform] duration-250 motion-reduce:transition-none",
         ]}
       >
@@ -398,7 +398,7 @@ const navigationGroupLabels = t.navigationGroups;
     .site-nav__group-content > a > span,
     .site-nav__global-entry > a > span {
       position: relative;
-      z-index: 1;
+      z-index: var(--z-local-raised);
     }
 
     .site-nav__group--local {
@@ -591,7 +591,7 @@ const navigationGroupLabels = t.navigationGroups;
         position: absolute;
         inset-block-start: calc(100% + 0.375rem);
         inset-inline-end: 0;
-        z-index: 70;
+        z-index: var(--z-popover);
         display: grid;
         min-width: 8rem;
         margin: 0;

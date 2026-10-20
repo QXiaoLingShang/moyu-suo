@@ -35,9 +35,7 @@ const items = await Promise.all(
       data-pagefind-ignore
       class="flex flex-none flex-col items-center justify-center gap-1 md:items-start"
     >
-      <span class="italic" data-i18n="post.sharePostIntro">
-        {t.post.sharePostIntro}
-      </span>
+      <span data-i18n="post.sharePostIntro">{t.post.sharePostIntro}</span>
       <div class="text-center">
         {items.map(({ url, title, Icon }) =>
           Icon ? (

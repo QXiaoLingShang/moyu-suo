@@ -5,7 +5,28 @@
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
+:root {
+  --z-local-behind: -1;
+  --z-local-base: 0;
+  --z-local-raised: 1;
+  --z-local-overlay: 2;
+  --z-local-accent: 3;
+  --z-local-top: 4;
+  --z-sticky: 10;
+  --z-floating: 20;
+  --z-pointer-effects: 25;
+  --z-popover: 30;
+  --z-navigation: 40;
+  --z-modal: 50;
+  --z-skip-link: 70;
+}
+
 @layer base {
+  html {
+    /* Root layout owns scrollbar space, including while overlays lock scrolling. */
+    scrollbar-gutter: stable;
+  }
+
   * {
     @apply border-border outline-accent/75;
     scrollbar-width: auto;
@@ -116,7 +137,7 @@
     /* Percentages here resolve against the fixed viewport, excluding its scrollbar. */
     --article-side-space: calc((100% - var(--article-content-width)) / 2);
     position: fixed;
-    z-index: 20;
+    z-index: var(--z-sticky);
     inset-block-start: 6rem;
     /* Anchor the inner edge, so capping width adds space outside the sidebar
        without changing the equal text-to-rail gaps. */
@@ -341,7 +362,7 @@
 /* 跟随鼠标的 tooltip 元素（JS 注入 body，见 scripts/spoiler-tip.ts） */
 .spoiler-tip {
   position: fixed;
-  z-index: 50;
+  z-index: var(--z-popover);
   pointer-events: none;
   background: #18181b;
   color: #fafafa;

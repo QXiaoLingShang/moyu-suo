@@ -1,3 +1,5 @@
+import type { TransitionBeforeSwapEvent } from "astro:transitions/client";
+
 const THEME_KEY = "theme";
 const MANUAL_THEME_KEY = "theme-manual";
 type Theme = "light" | "dark";
@@ -70,18 +72,24 @@ setup();
 // Re-run after View Transitions navigation.
 document.addEventListener("astro:after-swap", setup);
 
-// Carry the theme-color value across View Transitions to prevent the
-// Android navigation bar from flashing during page transitions.
-document.addEventListener("astro:before-swap", event => {
-  const color = document
-    .querySelector("meta[name='theme-color']")
-    ?.getAttribute("content");
-  if (color) {
-    (event as { newDocument: Document }).newDocument
+// Carry the effective theme before the swap so layout never observes a
+// temporary light palette and starts redundant colour transitions in dark mode.
+document.addEventListener(
+  "astro:before-swap",
+  (event: TransitionBeforeSwapEvent) => {
+    const nextDocument = event.newDocument;
+    nextDocument.documentElement.setAttribute("data-theme", themeValue);
+    nextDocument.documentElement.classList.toggle("dark", themeValue === DARK);
+    const color = document
       .querySelector("meta[name='theme-color']")
-      ?.setAttribute("content", color);
+      ?.getAttribute("content");
+    if (color) {
+      nextDocument
+        .querySelector("meta[name='theme-color']")
+        ?.setAttribute("content", color);
+    }
   }
-});
+);
 
 // Sync with OS-level dark/light preference changes.
 window

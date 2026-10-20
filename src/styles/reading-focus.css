@@ -1,6 +1,6 @@
 .reading-focus-toolbar {
   position: relative;
-  z-index: 21;
+  z-index: var(--z-floating);
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -53,7 +53,7 @@
 
 .reading-focus-panel {
   position: absolute;
-  z-index: 70;
+  z-index: var(--z-popover);
   inset-block-start: calc(100% + 0.75rem);
   inset-inline-end: 0;
   width: min(19rem, calc(100vw - 2rem));
@@ -261,7 +261,7 @@
   --reading-focus-width: 0px;
   --reading-focus-height: 0px;
   position: fixed;
-  z-index: 15;
+  z-index: var(--z-floating);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.12s ease;

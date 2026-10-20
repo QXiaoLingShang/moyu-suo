@@ -8,7 +8,7 @@ const initialLanguage = locale.startsWith("en") ? "en" : "zh-CN";
 <div class="lang-switcher" data-lang-switcher>
   <button
     type="button"
-    class="lang-switcher__trigger focus-outline hover:text-accent"
+    class="lang-switcher__trigger focus-outline"
     aria-label="显示语言 / Display language"
     title="显示语言 / Display language"
     aria-expanded="false"
@@ -87,6 +87,11 @@ const initialLanguage = locale.startsWith("en") ? "en" : "zh-CN";
     transition: color 180ms ease;
   }
 
+  .lang-switcher__trigger:hover,
+  .lang-switcher__trigger:focus-visible {
+    color: var(--accent);
+  }
+
   .lang-switcher__chevron {
     width: 0.75rem;
     height: 0.75rem;
@@ -107,7 +112,7 @@ const initialLanguage = locale.startsWith("en") ? "en" : "zh-CN";
 
   .lang-switcher__menu {
     position: absolute;
-    z-index: 80;
+    z-index: var(--z-popover);
     inset-block-start: calc(100% + 0.5rem);
     inset-inline-end: 0;
     display: grid;

@@ -1,7 +1,7 @@
 export function setupReadingProgress(): () => void {
   const container = document.createElement("div");
   container.className =
-    "progress-container fixed top-0 z-10 h-1 w-full bg-background";
+    "progress-container fixed top-0 z-[var(--z-sticky)] h-1 w-full bg-background";
   container.setAttribute("aria-hidden", "true");
 
   const bar = document.createElement("div");

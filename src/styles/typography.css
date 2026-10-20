@@ -13,10 +13,6 @@
       @apply text-foreground mb-3;
     }
 
-    h3 {
-      @apply italic;
-    }
-
     p,
     strong,
     ol,
@@ -151,7 +147,8 @@
     }
 
     blockquote {
-      @apply border-s-accent/80 wrap-break-word opacity-80;
+      /* Typography adds decorative italics; explicit em/i keep their own style. */
+      @apply border-s-accent/80 wrap-break-word not-italic opacity-80;
     }
 
     details:not(.callout) {

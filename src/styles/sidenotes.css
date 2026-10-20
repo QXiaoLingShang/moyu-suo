@@ -88,7 +88,7 @@
       visibility 0s;
   }
   #article[data-sidenotes="wide"] .sidenote-transition-shadow {
-    z-index: 2;
+    z-index: var(--z-local-overlay);
     transition: none;
   }
   #article[data-sidenotes="wide"] .sidenote-heading {
@@ -185,7 +185,7 @@
     background: color-mix(in srgb, var(--foreground) 12%, transparent);
   }
   .sidenote-dot {
-    z-index: 2;
+    z-index: var(--z-local-overlay);
     position: absolute;
     left: 0;
     transform: translate(-50%, -50%)
