@@ -1,3 +1,5 @@
+import { acquirePageScrollLock } from "./pageScrollLock";
+
 export function setupSiteHeader(): void {
   function toggleNav() {
     const menuBtn = document.querySelector<HTMLButtonElement>("#menu-btn");
@@ -21,8 +23,7 @@ export function setupSiteHeader(): void {
     const desktopQuery = window.matchMedia("(min-width: 40rem)");
     let isOpen = false;
     let isScrollLocked = false;
-    let previousRootOverflowY = "";
-    let previousBodyOverflow = "";
+    let releasePageScrollLock: (() => void) | undefined;
     let closeTimer: number | undefined;
     let transitionId = 0;
 
@@ -68,18 +69,15 @@ export function setupSiteHeader(): void {
 
     function lockPageScroll() {
       if (!isScrollLocked) {
-        previousRootOverflowY = document.documentElement.style.overflowY;
-        previousBodyOverflow = document.body.style.overflow;
+        releasePageScrollLock = acquirePageScrollLock();
         isScrollLocked = true;
       }
-      document.documentElement.style.overflowY = "hidden";
-      document.body.style.overflow = "hidden";
     }
 
     function unlockPageScroll() {
       if (!isScrollLocked) return;
-      document.documentElement.style.overflowY = previousRootOverflowY;
-      document.body.style.overflow = previousBodyOverflow;
+      releasePageScrollLock?.();
+      releasePageScrollLock = undefined;
       isScrollLocked = false;
     }
 

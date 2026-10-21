@@ -1,6 +1,23 @@
 import type { UIStrings } from "../types";
 
 export default {
+  mediaPreview: {
+    zoomIn: "Zoom in",
+    zoomOut: "Zoom out",
+    reset: "Fit to view",
+    hint: "Scroll or pinch to zoom; drag to pan. Double-click or double-tap to zoom or reset. Keyboard: +, −, 0 and arrow keys. Escape closes the preview.",
+  },
+  mermaid: {
+    views: "Mermaid views",
+    chart: "Diagram",
+    source: "Source",
+    sourceView: "Source view",
+    focus: "Enlarge diagram",
+    close: "Close diagram preview",
+    loading: "Rendering diagram… Source remains available.",
+    ready: "Diagram ready",
+    error: "Diagram could not be rendered. Original source is shown.",
+  },
   nav: {
     home: "Home",
     posts: "Posts",
@@ -44,6 +61,8 @@ export default {
     prev: "Prev",
     next: "Next",
     page: "Page",
+    pageLabel: "Page {{page}}",
+    currentPage: "Page {{page}} of {{total}}, choose a page",
   },
   home: {
     socialLinks: "Social Links",
@@ -92,6 +111,7 @@ export default {
       "No Pagefind index is available in development. Run pnpm build to generate it.",
   },
   a11y: {
+    breadcrumb: "Breadcrumb",
     skipToContent: "Skip to content",
     openMenu: "Open menu",
     closeMenu: "Close menu",

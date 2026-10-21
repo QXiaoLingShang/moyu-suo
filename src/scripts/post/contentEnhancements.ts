@@ -18,7 +18,7 @@ export function setupArticleContentEnhancements(
     button: HTMLButtonElement;
     originalTabIndex: string | null;
   }> = [];
-  const copyTimers = new Set<number>();
+  const copyTimers = new Map<HTMLButtonElement, number>();
 
   const headings = Array.from(
     article.querySelectorAll<HTMLHeadingElement>("h2, h3, h4, h5, h6")
@@ -45,6 +45,12 @@ export function setupArticleContentEnhancements(
   }
 
   for (const block of article.querySelectorAll<HTMLPreElement>("pre")) {
+    // Mermaid owns its source and controls, even before its lazy import resolves.
+    if (
+      block.matches('[data-language="mermaid"]') ||
+      block.querySelector("code.language-mermaid")
+    )
+      continue;
     const wrapper = document.createElement("div");
     wrapper.style.position = "relative";
 
@@ -69,14 +75,22 @@ export function setupArticleContentEnhancements(
       "click",
       async () => {
         const code = block.querySelector("code");
-        await navigator.clipboard.writeText(code?.innerText ?? "");
+        try {
+          await navigator.clipboard.writeText(code?.innerText ?? "");
+        } catch {
+          // Clipboard access may be denied; keep the source selectable.
+          return;
+        }
+        if (controller.signal.aborted || !button.isConnected) return;
+        const previousTimer = copyTimers.get(button);
+        if (previousTimer !== undefined) window.clearTimeout(previousTimer);
         setCopyButtonPhrase(button, "post.codeCopied");
 
         const timer = window.setTimeout(() => {
-          copyTimers.delete(timer);
+          copyTimers.delete(button);
           setCopyButtonPhrase(button, "post.copyCode");
         }, 700);
-        copyTimers.add(timer);
+        copyTimers.set(button, timer);
       },
       { signal: controller.signal }
     );
@@ -106,6 +120,7 @@ export function setupArticleContentEnhancements(
   return () => {
     controller.abort();
     copyTimers.forEach(timer => window.clearTimeout(timer));
+    copyTimers.clear();
     headingLinks.forEach(({ link }) => link.remove());
     addedGroupClasses.forEach(heading => heading.classList.remove("group"));
 

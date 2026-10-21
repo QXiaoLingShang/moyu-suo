@@ -1,6 +1,23 @@
 import type { UIStrings } from "../types";
 
 export default {
+  mediaPreview: {
+    zoomIn: "放大",
+    zoomOut: "缩小",
+    reset: "适应视口",
+    hint: "滚轮或双指缩放，拖动平移；双击或双击触摸可放大、复位。键盘使用 +、−、0 和方向键，Escape 关闭预览。",
+  },
+  mermaid: {
+    views: "Mermaid 视图",
+    chart: "图表",
+    source: "源码",
+    sourceView: "源码视图",
+    focus: "放大图表",
+    close: "关闭图表预览",
+    loading: "正在渲染图表…可先阅读源码。",
+    ready: "图表已就绪",
+    error: "图表渲染失败，已显示原始源码。",
+  },
   nav: {
     home: "首页",
     posts: "文章",
@@ -44,6 +61,8 @@ export default {
     prev: "上一页",
     next: "下一页",
     page: "页",
+    pageLabel: "第 {{page}} 页",
+    currentPage: "第 {{page}} 页，共 {{total}} 页，选择页码",
   },
   home: {
     socialLinks: "社交链接",
@@ -92,6 +111,7 @@ export default {
       "开发环境中没有可用的 Pagefind 索引。运行 pnpm build 生成索引。",
   },
   a11y: {
+    breadcrumb: "面包屑导航",
     skipToContent: "跳到主要内容",
     openMenu: "打开菜单",
     closeMenu: "关闭菜单",

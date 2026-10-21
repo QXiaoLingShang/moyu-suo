@@ -48,6 +48,8 @@ export default defineConfig({
     },
   },
   markdown: {
+    // Preserve the fence language and literal source instead of Shiki's plaintext fallback.
+    syntaxHighlight: { type: "shiki", excludeLangs: ["mermaid"] },
     processor: unified({
       remarkPlugins: [
         remarkGemoji,

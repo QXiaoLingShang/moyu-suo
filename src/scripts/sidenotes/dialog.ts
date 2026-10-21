@@ -1,4 +1,5 @@
 import { NOTE_DIALOG_BEFORE_CLOSE, isElementVisible } from "./dom";
+import { acquirePageScrollLock } from "../pageScrollLock";
 import {
   noteLabel,
   preferredReference,
@@ -66,9 +67,7 @@ export function createNoteDialog({
   let modalItems: NoteReference[] = [];
   let modalAllNotes = true;
   let sourceMinHeight = "";
-  let rootOverflow = "",
-    bodyOverflow = "",
-    rootGutter = "";
+  let releasePageScrollLock: (() => void) | undefined;
 
   function updateCurrentCopy(): void {
     if (!modalNote || !modalReference) return;
@@ -109,9 +108,8 @@ export function createNoteDialog({
     );
     dialog.close();
     restoreBody();
-    document.documentElement.style.overflowY = rootOverflow;
-    document.documentElement.style.scrollbarGutter = rootGutter;
-    document.body.style.overflow = bodyOverflow;
+    releasePageScrollLock?.();
+    releasePageScrollLock = undefined;
     if (restoreFocus && opener?.isConnected) {
       const target =
         opener.closest("[inert]") || !isElementVisible(opener)
@@ -130,18 +128,7 @@ export function createNoteDialog({
         (document.activeElement instanceof HTMLElement
           ? document.activeElement
           : null);
-      rootOverflow = document.documentElement.style.overflowY;
-      rootGutter = document.documentElement.style.scrollbarGutter;
-      if (
-        innerWidth > document.documentElement.clientWidth &&
-        !getComputedStyle(document.documentElement).scrollbarGutter.includes(
-          "stable"
-        )
-      )
-        document.documentElement.style.scrollbarGutter = "stable";
-      bodyOverflow = document.body.style.overflow;
-      document.documentElement.style.overflowY = "hidden";
-      document.body.style.overflow = "hidden";
+      releasePageScrollLock = acquirePageScrollLock();
     }
     // Switching notes also moves the image viewer's host; close it before restoring the body.
     if (dialog.open)

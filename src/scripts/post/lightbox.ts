@@ -1,3 +1,7 @@
+import Close from "@/assets/icons/IconX.svg?raw";
+import { acquirePageScrollLock } from "../pageScrollLock";
+import { setupPreviewInteractions } from "./previewInteractions";
+import { createIconControl } from "./previewControls";
 import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
 import { tplStr } from "@/i18n/format";
 
@@ -8,21 +12,29 @@ type ImageAttributes = {
   label: string | null;
 };
 
-type PendingRemoval = () => void;
+type PendingOverlayRemoval = () => void;
 
 export function setupImageLightbox(article: HTMLElement): () => void {
   const controller = new AbortController();
   const { signal } = controller;
   const originalAttributes = new Map<HTMLImageElement, ImageAttributes>();
-  const pendingRemovals = new Set<PendingRemoval>();
+  const pendingOverlayRemovals = new Set<PendingOverlayRemoval>();
+  const overlayResizeHandlers = new Map<HTMLDivElement, () => void>();
   let overlay: HTMLDivElement | null = null;
   let lastFocused: HTMLElement | null = null;
   let scrollLockCount = 0;
-  let previousRootOverflowY = "";
-  let previousBodyOverflow = "";
+  let releasePageScrollLock: (() => void) | undefined;
   let attributesFrame = 0;
   let openingFrame = 0;
   let activeImageAlt: string | null = null;
+  let interactions: ReturnType<typeof setupPreviewInteractions> | undefined;
+
+  function releaseOverlayResizeHandler(target: HTMLDivElement): void {
+    const handler = overlayResizeHandlers.get(target);
+    if (!handler) return;
+    window.removeEventListener("resize", handler);
+    overlayResizeHandlers.delete(target);
+  }
 
   function imageActionLabel(
     phrase: "zoomImage" | "imagePreview",
@@ -45,9 +57,6 @@ export function setupImageLightbox(article: HTMLElement): () => void {
         "aria-label",
         imageActionLabel("imagePreview", activeImageAlt)
       );
-      overlay
-        .querySelector("button")
-        ?.setAttribute("aria-label", getUIString("post.closeImagePreview"));
     }
   }
 
@@ -55,20 +64,15 @@ export function setupImageLightbox(article: HTMLElement): () => void {
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function lockPageScroll(): void {
-    if (scrollLockCount === 0) {
-      previousRootOverflowY = document.documentElement.style.overflowY;
-      previousBodyOverflow = document.body.style.overflow;
-    }
+    if (scrollLockCount === 0) releasePageScrollLock = acquirePageScrollLock();
     scrollLockCount += 1;
-    document.documentElement.style.overflowY = "hidden";
-    document.body.style.overflow = "hidden";
   }
 
   function unlockPageScroll(): void {
     scrollLockCount = Math.max(0, scrollLockCount - 1);
     if (scrollLockCount > 0) return;
-    document.documentElement.style.overflowY = previousRootOverflowY;
-    document.body.style.overflow = previousBodyOverflow;
+    releasePageScrollLock?.();
+    releasePageScrollLock = undefined;
   }
 
   function restoreImageAttributes(): void {
@@ -125,17 +129,17 @@ export function setupImageLightbox(article: HTMLElement): () => void {
       imageActionLabel("imagePreview", alt)
     );
     currentOverlay.className =
-      "fixed inset-0 z-50 flex cursor-zoom-out items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200 motion-reduce:transition-none";
+      "media-preview media-preview-lightbox fixed inset-0 z-[var(--z-modal)] flex cursor-zoom-out items-center justify-center bg-black/70 backdrop-blur-sm opacity-0 transition-opacity duration-200 motion-reduce:transition-none";
+    const resizeHandler = () => {
+      currentOverlay.style.width = `${window.innerWidth}px`;
+      if (overlay === currentOverlay) interactions?.refresh();
+    };
+    resizeHandler();
+    overlayResizeHandlers.set(currentOverlay, resizeHandler);
+    window.addEventListener("resize", resizeHandler);
 
-    const closeButton = document.createElement("button");
-    closeButton.type = "button";
-    closeButton.setAttribute(
-      "aria-label",
-      getUIString("post.closeImagePreview")
-    );
-    closeButton.className =
-      "absolute end-4 top-4 rounded p-2 text-3xl leading-none text-white";
-    closeButton.textContent = "×";
+    const closeButton = createIconControl("post.closeImagePreview", Close);
+    closeButton.classList.add("media-preview-close");
     closeButton.addEventListener("click", () => close());
 
     const image = document.createElement("img");
@@ -145,120 +149,9 @@ export function setupImageLightbox(article: HTMLElement): () => void {
       "max-h-[90dvh] max-w-[90dvw] cursor-default object-contain";
     currentOverlay.append(closeButton, image);
 
-    let currentScale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    let initialDist = 0;
-    let initialScale = 1;
-    let panStartX = 0;
-    let panStartY = 0;
-    let panStartTranslateX = 0;
-    let panStartTranslateY = 0;
-    let lastTapTime = 0;
-
-    function applyTransform(): void {
-      image.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
-    }
-
-    function resetTransform(): void {
-      currentScale = 1;
-      translateX = 0;
-      translateY = 0;
-      image.style.transform = "";
-    }
-
-    currentOverlay.addEventListener("click", event => {
-      if (event.target === currentOverlay && currentScale <= 1) close();
-    });
-    currentOverlay.addEventListener(
-      "touchstart",
-      event => {
-        const touches = event.touches;
-        if (touches.length === 2) {
-          initialDist = Math.hypot(
-            touches[1].clientX - touches[0].clientX,
-            touches[1].clientY - touches[0].clientY
-          );
-          initialScale = currentScale;
-        } else if (touches.length === 1) {
-          const now = Date.now();
-          if (now - lastTapTime < 300) {
-            event.preventDefault();
-            if (currentScale > 1) resetTransform();
-            else {
-              currentScale = 2;
-              translateX = 0;
-              translateY = 0;
-              applyTransform();
-            }
-            lastTapTime = 0;
-            panStartX = touches[0].clientX;
-            panStartY = touches[0].clientY;
-            panStartTranslateX = translateX;
-            panStartTranslateY = translateY;
-          } else {
-            lastTapTime = now;
-            if (currentScale > 1) {
-              panStartX = touches[0].clientX;
-              panStartY = touches[0].clientY;
-              panStartTranslateX = translateX;
-              panStartTranslateY = translateY;
-            }
-          }
-        }
-      },
-      { passive: false }
+    interactions = setupPreviewInteractions(currentOverlay, image, () =>
+      close()
     );
-    currentOverlay.addEventListener(
-      "touchmove",
-      event => {
-        const touches = event.touches;
-        if (touches.length === 2) {
-          event.preventDefault();
-          if (initialDist <= 0) return;
-          const distance = Math.hypot(
-            touches[1].clientX - touches[0].clientX,
-            touches[1].clientY - touches[0].clientY
-          );
-          currentScale = Math.min(
-            4,
-            Math.max(1, initialScale * (distance / initialDist))
-          );
-          applyTransform();
-        } else if (touches.length === 1) {
-          if (currentScale > 1) {
-            event.preventDefault();
-            translateX =
-              panStartTranslateX +
-              (touches[0].clientX - panStartX) / currentScale;
-            translateY =
-              panStartTranslateY +
-              (touches[0].clientY - panStartY) / currentScale;
-            const maxX = Math.max(
-              0,
-              (image.clientWidth - currentOverlay.clientWidth / currentScale) /
-                2
-            );
-            const maxY = Math.max(
-              0,
-              (image.clientHeight -
-                currentOverlay.clientHeight / currentScale) /
-                2
-            );
-            translateX = Math.min(maxX, Math.max(-maxX, translateX));
-            translateY = Math.min(maxY, Math.max(-maxY, translateY));
-            applyTransform();
-          } else event.preventDefault();
-        }
-      },
-      { passive: false }
-    );
-    currentOverlay.addEventListener("touchend", event => {
-      if (event.touches.length === 0 && currentScale <= 1.05) resetTransform();
-    });
-    currentOverlay.addEventListener("touchcancel", event => {
-      if (event.touches.length === 0 && currentScale <= 1.05) resetTransform();
-    });
 
     // A body-level overlay cannot cover a modal dialog's top layer, regardless of z-index.
     const containingDialog = trigger.closest("dialog[open]");
@@ -270,19 +163,24 @@ export function setupImageLightbox(article: HTMLElement): () => void {
       if (overlay === currentOverlay)
         currentOverlay.classList.add("opacity-100");
     });
-    closeButton.focus();
+    closeButton.focus({ preventScroll: true });
   }
 
-  function close(immediate = false, restoreFocus = true): void {
+  function close({
+    immediate = false,
+    restoreFocus = true,
+  }: { immediate?: boolean; restoreFocus?: boolean } = {}): void {
     if (!overlay) return;
     const closingOverlay = overlay;
     overlay = null;
     activeImageAlt = null;
+    interactions?.dispose();
+    interactions = undefined;
     document.removeEventListener("keydown", onKeyDown);
     if (openingFrame) window.cancelAnimationFrame(openingFrame);
     openingFrame = 0;
 
-    if (restoreFocus) lastFocused?.focus();
+    if (restoreFocus) lastFocused?.focus({ preventScroll: true });
     lastFocused = null;
 
     if (
@@ -291,10 +189,15 @@ export function setupImageLightbox(article: HTMLElement): () => void {
       prefersReducedMotion()
     ) {
       closingOverlay.remove();
+      releaseOverlayResizeHandler(closingOverlay);
       unlockPageScroll();
       return;
     }
 
+    // Focus has returned to the trigger; keep the fading overlay out of the
+    // accessibility tree and tab order until its transition finishes.
+    closingOverlay.setAttribute("aria-hidden", "true");
+    closingOverlay.inert = true;
     let removed = false;
     let timer = 0;
     const remove = () => {
@@ -303,10 +206,11 @@ export function setupImageLightbox(article: HTMLElement): () => void {
       if (timer) window.clearTimeout(timer);
       closingOverlay.removeEventListener("transitionend", remove);
       closingOverlay.remove();
+      releaseOverlayResizeHandler(closingOverlay);
       unlockPageScroll();
-      pendingRemovals.delete(remove);
+      pendingOverlayRemovals.delete(remove);
     };
-    pendingRemovals.add(remove);
+    pendingOverlayRemovals.add(remove);
     closingOverlay.addEventListener("transitionend", remove, { once: true });
     timer = window.setTimeout(remove, 250);
     closingOverlay.classList.remove("opacity-100");
@@ -324,7 +228,7 @@ export function setupImageLightbox(article: HTMLElement): () => void {
   function trapFocus(event: KeyboardEvent): void {
     if (!overlay) return;
     const focusables = overlay.querySelectorAll<HTMLElement>(
-      'a[href], button, [tabindex]:not([tabindex="-1"])'
+      'a[href], button:not(:disabled), [tabindex]:not([tabindex="-1"])'
     );
     if (focusables.length === 0) return;
     const first = focusables[0];
@@ -357,7 +261,7 @@ export function setupImageLightbox(article: HTMLElement): () => void {
         event.target instanceof Element &&
         event.target.contains(overlay)
       )
-        close(true);
+        close({ immediate: true });
     },
     { signal }
   );
@@ -395,8 +299,8 @@ export function setupImageLightbox(article: HTMLElement): () => void {
     if (openingFrame) window.cancelAnimationFrame(openingFrame);
     attributesFrame = 0;
     openingFrame = 0;
-    if (overlay) close(true, false);
-    for (const remove of [...pendingRemovals]) remove();
+    if (overlay) close({ immediate: true, restoreFocus: false });
+    for (const remove of [...pendingOverlayRemovals]) remove();
     restoreImageAttributes();
   };
 }

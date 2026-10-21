@@ -1,4 +1,21 @@
 export interface UIStrings {
+  mediaPreview: {
+    zoomIn: string;
+    zoomOut: string;
+    reset: string;
+    hint: string;
+  };
+  mermaid: {
+    views: string;
+    chart: string;
+    source: string;
+    sourceView: string;
+    focus: string;
+    close: string;
+    loading: string;
+    ready: string;
+    error: string;
+  };
   nav: {
     home: string;
     posts: string;
@@ -42,6 +59,8 @@ export interface UIStrings {
     prev: string;
     next: string;
     page: string;
+    pageLabel: string;
+    currentPage: string;
   };
   home: {
     socialLinks: string;
@@ -89,6 +108,7 @@ export interface UIStrings {
     searchIndexUnavailable: string;
   };
   a11y: {
+    breadcrumb: string;
     skipToContent: string;
     openMenu: string;
     closeMenu: string;
