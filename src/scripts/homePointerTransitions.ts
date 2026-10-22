@@ -23,6 +23,7 @@ const MERGED_GLOW_SIZE = 3;
 export type HomePointerEffectState =
   | "inactive"
   | "following"
+  | "icon"
   | "approaching"
   | "dispersing"
   | "merged"
@@ -169,7 +170,19 @@ export function createHomePointerTransitions({
   }
 
   function beginApproach(target: HTMLElement): void {
-    targets.prepare(target);
+    // Text keeps its per-glyph destinations; visible SVG paths are sampled
+    // separately so icon-only and mixed controls use the same particle flow.
+    if (!targets.hasDestinations(target)) {
+      abandonGatheringRound();
+      activeSession = createSession(target);
+      glow.dataset.mode = "entry";
+      setState("icon");
+      highlight.setPhase(target, "merged");
+      setGlowSize(MERGED_GLOW_SIZE);
+      motion.setGlowTarget(motion.pointerPosition());
+      motion.scheduleFrame();
+      return;
+    }
 
     const round = gatheringRound;
     const reversingGather = round && state === "gathering";
@@ -383,6 +396,10 @@ export function createHomePointerTransitions({
     target: HTMLElement,
     session: TransitionSession
   ): boolean {
+    if (state === "icon") {
+      motion.setGlowTarget(motion.pointerPosition());
+      return true;
+    }
     if (state === "approaching") {
       motion.retargetApproach(
         targets.boundaryPoint(target, motion.pointerPosition(), TARGET_PADDING)
@@ -423,6 +440,14 @@ export function createHomePointerTransitions({
   }
 
   function refreshTargetGeometry(nextTarget: HTMLElement | null): void {
+    if (hoveredTarget && hoveredTarget === nextTarget) {
+      const shouldUseIconState = !targets.hasDestinations(hoveredTarget);
+      if ((state === "icon") !== shouldUseIconState) {
+        refreshTargetContent(nextTarget);
+        return;
+      }
+    }
+
     if (
       hoveredTarget &&
       activeSession &&
@@ -466,6 +491,7 @@ export function createHomePointerTransitions({
     if (hoveredTarget === next) {
       if (next) {
         pointer.dataset.mode = "entry";
+        if (state === "icon") motion.setGlowTarget(motion.pointerPosition());
       } else {
         pointer.removeAttribute("data-mode");
       }
@@ -483,6 +509,7 @@ export function createHomePointerTransitions({
         highlight.clearTarget(previous);
         glow.removeAttribute("data-mode");
         setState("following");
+        setGlowSize(DEFAULT_GLOW_SIZE);
         motion.setGlowTarget(motion.pointerPosition());
       }
     }

@@ -192,6 +192,7 @@ export function createHomePointerController({
         Boolean(transitions.currentTarget);
     } else if (
       transitions.state === "following" ||
+      transitions.state === "icon" ||
       transitions.state === "departing"
     ) {
       const follow = 1 - Math.exp(-elapsed / FOLLOW_TIME_MS);
@@ -221,6 +222,7 @@ export function createHomePointerController({
     if (
       transitions.state === "approaching" ||
       ((transitions.state === "following" ||
+        transitions.state === "icon" ||
         transitions.state === "departing") &&
         remaining > 0.4)
     ) {

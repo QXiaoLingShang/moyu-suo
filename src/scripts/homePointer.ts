@@ -46,7 +46,7 @@ export function setupHomePointer(): () => void {
   const { signal } = controller;
 
   window.addEventListener("pointermove", motion.updatePointer, { signal });
-  window.addEventListener("pointerleave", motion.deactivate, { signal });
+  root.addEventListener("pointerleave", motion.deactivate, { signal });
   window.addEventListener("blur", motion.deactivate, { signal });
   window.addEventListener("scroll", motion.refreshTextBounds, {
     signal,

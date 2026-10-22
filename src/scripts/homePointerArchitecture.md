@@ -47,21 +47,23 @@ particles  ── create/remove ──> satellite DOM
 
 这些属性是模块间接口。增加、重命名或改变含义时，需同时检查写入方、清理方和 `src/styles/home.css` 中的选择器。
 
-| DOM 属性                                                    | 写入方                   | 含义与样式约定                                                                                                                                                                                |
-| ----------------------------------------------------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 指针/光环 `data-active`、根节点 `data-home-cursor-active`   | `homePointerController`  | 控制器在首次有效鼠标输入时写入、停用时清除；CSS 用于显隐/恢复原链接 hover 样式。控制器也读取指针 `data-active` 作为激活门闩，因此它兼有交互控制和显示用途。                                   |
-| 光环 `data-state`                                           | `homePointerTransitions` | 内部状态为 `inactive` 或 `following` 时移除；`approaching`、`dispersing`、`merged`、`gathering`、`departing` 才写入。CSS 只消费后五种视觉状态。不要为纯内部状态增加属性，除非确有样式消费者。 |
-| 光环/指针 `data-mode`                                       | `homePointerTransitions` | `entry` 和 `text` 表示特定视觉模式；默认模式通过移除属性表达。CSS 的默认样式就是缺省模式，不写入冗余的 `moon` 值。                                                                            |
-| 目标/入口 `data-home-pointer-phase`                         | `homePointerHighlight`   | `approaching`、`dispersing`、`merged`、`departing` 描述目标生命周期。`departing` 会撤销整控件的 `merged` 样式，即使当前没有单独的 departing 选择器，也不能随意省略。                          |
-| 目标 `data-home-pointer-text="glyphs"`                      | `homePointerTargets`     | 表示文本已按字形拆分；CSS 据此避免整控件高亮与逐字高亮叠加。清理目标时由 `homePointerHighlight` 移除。                                                                                        |
-| 字形 `data-home-pointer-anchor`、`data-home-pointer-source` | `homePointerHighlight`   | 粒子锚点和扩散来源的关联数据，供回收及高亮扩散使用；清理时随目标状态一并移除。                                                                                                                |
-| 字形 `data-home-pointer-lit`、`data-home-pointer-fading`    | `homePointerHighlight`   | 分别驱动抵达高亮和离开渐隐；仅粒子结果为 `arrived` 时记为抵达，预算淘汰不能点亮字形。                                                                                                         |
+| DOM 属性                                                    | 写入方                   | 含义与样式约定                                                                                                                                                                                                                                                          |
+| ----------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 指针/光环 `data-active`、根节点 `data-home-cursor-active`   | `homePointerController`  | 控制器在首次有效鼠标输入时写入、停用时清除；CSS 用于显隐/恢复原链接 hover 样式。控制器也读取指针 `data-active` 作为激活门闩，因此它兼有交互控制和显示用途。                                                                                                             |
+| 光环 `data-state`                                           | `homePointerTransitions` | 内部状态为 `inactive` 或 `following` 时移除；`approaching`、`icon`、`dispersing`、`merged`、`gathering`、`departing` 才写入。`icon` 仅用于没有可见文字且没有可采样 SVG 路径的图像控件；可见 SVG 与文字共用拆散/合并流程。不要为纯内部状态增加属性，除非确有样式消费者。 |
+| 光环/指针 `data-mode`                                       | `homePointerTransitions` | `entry` 和 `text` 表示特定视觉模式；默认模式通过移除属性表达。CSS 的默认样式就是缺省模式，不写入冗余的 `moon` 值。                                                                                                                                                      |
+| 目标/入口 `data-home-pointer-phase`                         | `homePointerHighlight`   | `approaching`、`dispersing`、`merged`、`departing` 描述目标生命周期。`departing` 会撤销整控件的 `merged` 样式，即使当前没有单独的 departing 选择器，也不能随意省略。                                                                                                    |
+| 目标 `data-home-pointer-text="glyphs"`                      | `homePointerTargets`     | 表示文本已按字形拆分；CSS 据此避免整控件高亮与逐字高亮叠加。清理目标时由 `homePointerHighlight` 移除。                                                                                                                                                                  |
+| 字形 `data-home-pointer-anchor`、`data-home-pointer-source` | `homePointerHighlight`   | 粒子锚点和扩散来源的关联数据，供回收及高亮扩散使用；清理时随目标状态一并移除。                                                                                                                                                                                          |
+| 字形 `data-home-pointer-lit`、`data-home-pointer-fading`    | `homePointerHighlight`   | 分别驱动抵达高亮和离开渐隐；仅粒子结果为 `arrived` 时记为抵达，预算淘汰不能点亮字形。                                                                                                                                                                                   |
 
 内部效果状态与 `data-state` 不要求一一对应。例如 `following` 只驱动控制器插值，不是 CSS 状态。`data-active` 是另一个已存在的控制门闩；若重构它，应同步考虑 CSS 消费方，避免状态与显示属性失配。
 
+目标按实际可见字形分流：`.sr-only`、脚本/样式和 CSS 隐藏文本不生成字形；`aria-hidden` 本身不等于视觉隐藏（例如语言按钮的“中 / EN”）。可见文字继续按字形生成目的点；可见 SVG 的实际路径按屏幕坐标采样，和文字字形一起进入同一套光环接近、光点扩散、目标点亮与回收流程。纯 SVG 控件不伪造文本字形或退化到中心点；没有可见文字且没有可采样 SVG 路径的图像控件才进入 `icon`，直接高亮自身。图文混合控件从 SVG 内部或控件边缘命中时仍保留逐字粒子效果，光点抵达后 SVG 同步高亮。切换目标时取消上一轮粒子回收并清理高亮，避免旧回调影响新目标；滚动/尺寸变化重新命中，语言变化重新判定文字和 SVG 目的点，停用和页面离开沿用统一清理路径。
+
 ## 生命周期和性能边界
 
-- 入口使用一个 `AbortController` 绑定窗口和媒体偏好监听器；清理时先中止监听，再调用控制器销毁，最后移除装饰层。
+- 入口使用一个 `AbortController` 绑定窗口、根元素和媒体偏好监听器；根元素的 `pointerleave` 不冒泡到窗口，因此在根元素上处理移出视口的停用。清理时先中止监听，再调用控制器销毁，最后移除装饰层。
 - 控制器销毁时停用效果、取消动画帧并断开语言观察器。粒子取消时清除动画帧、延时器、粒子节点和活动记录。
 - 光环/指针位置绘制、命中解析以及滚动、尺寸、字体、语言触发的目标刷新通过同一个 `requestAnimationFrame` 合并；连续指针事件只保留最新位置和事件目标。入口和普通链接的命中边界按布局失效点缓存；活动粒子因布局变化重定向时，只重测其锚点字形。
 - 每帧优先使用 `transform` 更新光环、指针和粒子位置。避免在高频路径反复创建粒子 DOM、读取布局后立即写布局样式，或引入不受预算约束的活动粒子。
@@ -76,20 +78,3 @@ particles  ── create/remove ──> satellite DOM
 - [ ] 修改事件或动画资源时，检查页面切换、窗口失焦、指针离开、偏好变化和重复初始化后的清理。
 - [ ] 修改 CSS 属性契约时，用实际页面核对日/夜主题、宽/窄视口、键盘焦点和减少动态效果偏好。
 - [ ] 新增抽象应消除已存在的重复或耦合；不要仅为缩短单个文件而增加纯转发层。
-
-## 当前审查状态
-
-- 已落实：入口、控制器、目标解析、状态协调、目标几何、高亮、粒子和纯计算各有明确文件边界；控制器与状态协调器通过接口交换位置和动作。
-- 已落实：`data-state` 不再承载无样式消费者的 `following`；缺省视觉模式通过移除 `data-mode` 表达；粒子完成类型明确区分抵达和预算淘汰。
-- 生命周期协调：`homePointerTransitions.ts` 文件较长，但当前职责仍集中在目标会话与粒子所有权交接；几何由控制器管理，粒子运动和清理由 `homePointerParticles` 管理，高亮由 `homePointerHighlight` 管理。审查未发现需要立即拆分的职责交叉，不按行数拆文件。维护时保持 `activeSession` 负责接近/散开/抵达阶段、`gatheringRound` 负责回收阶段，并保留会话身份检查以隔离过期回调。若后续出现独立变化的生命周期，再考虑用可辨识状态结构表达这些所有权，再决定是否拆分。
-- 验收限制：本文依据当前源码和 CSS 契约整理。代码结构记录本身不代表所有时序组合都已在真实浏览器完成验证；涉及动效或布局的改动仍需按清单做运行时核对。
-
-## 渐进式落实顺序
-
-这份基准只覆盖当前整理的首页指针动效，不表示全仓约束已经全部落实。接下来按已发现的结构边界推进：
-
-1. [x] 记录指针动效当前的模块职责和脚本/CSS 属性映射；这是静态结构归纳，不等于行为验收。
-2. [x] 修复/验收粒子轮次隔离与目标布局变化期间的旧动画处理，明确取消、重定向和完成计数的边界（静态代码复核；浏览器时序仍需验收）。
-3. [x] 合并高频指针命中与几何读取，并检查长文本目标上的成本（单帧只处理最新输入；布局刷新时只重测活动锚点）。
-4. [x] 再用同一组仓库原则检查其余首页交互脚本，只处理真实的职责交叉或维护痛点。— 已复核 `homePortal`、`homeOrbit`、`homeAtmosphere`、`homeRipple`、`homeWaterGlints` 与 `homeImage`；状态和资源清理边界明确，暂未发现值得新增抽象层的职责交叉。
-5. [x] 仅为有持久状态约定的功能保留局部说明；一次性实现细节留在代码中。— 保留模块职责、状态契约和后续审查清单；移除已落实修复的回合记录。

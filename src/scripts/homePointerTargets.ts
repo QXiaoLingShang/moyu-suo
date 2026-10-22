@@ -14,6 +14,13 @@ export type PointerGlyphDestination = {
   point: PointerPoint;
 };
 
+type SVGPathSample = { path: SVGPathElement; x: number; y: number };
+type SVGPathSamples = {
+  paths: SVGPathElement[];
+  signature: string;
+  samples: SVGPathSample[];
+};
+
 const graphemeSegmenter =
   typeof Intl.Segmenter === "undefined"
     ? null
@@ -28,12 +35,35 @@ function splitGraphemes(value: string): string[] {
 export class HomePointerTargets {
   private entranceBounds = new Map<HTMLElement, PointerBounds>();
   private targetBounds = new Map<HTMLElement, PointerBounds>();
+  private destinationPresence = new WeakMap<HTMLElement, boolean>();
+  private svgSamples = new WeakMap<SVGSVGElement, SVGPathSamples>();
   private entranceBoundsLoaded = false;
 
   invalidate(): void {
     this.entranceBounds.clear();
     this.targetBounds.clear();
+    this.destinationPresence = new WeakMap();
     this.entranceBoundsLoaded = false;
+  }
+
+  hasDestinations(target: HTMLElement): boolean {
+    const cached = this.destinationPresence.get(target);
+    if (cached !== undefined) return cached;
+
+    const hasText = this.prepare(target).length > 0;
+    const hasSvgPath =
+      !hasText &&
+      Array.from(target.querySelectorAll<SVGSVGElement>("svg")).some(
+        svg =>
+          svg.checkVisibility({ visibilityProperty: true }) &&
+          Array.from(svg.querySelectorAll<SVGPathElement>("path")).some(
+            path =>
+              this.isVisibleDrawablePath(path) && path.getTotalLength() > 0
+          )
+      );
+    const hasDestinations = hasText || hasSvgPath;
+    this.destinationPresence.set(target, hasDestinations);
+    return hasDestinations;
   }
 
   glyphs(target: HTMLElement): HTMLElement[] {
@@ -43,7 +73,11 @@ export class HomePointerTargets {
       scope.querySelectorAll<HTMLElement>(
         ".home-entrance__glyph, .home-pointer__glyph"
       )
-    ).filter(glyph => Boolean(glyph.textContent?.trim()));
+    ).filter(
+      glyph =>
+        Boolean(glyph.textContent?.trim()) &&
+        glyph.checkVisibility({ visibilityProperty: true })
+    );
   }
 
   prepare(target: HTMLElement): HTMLElement[] {
@@ -60,9 +94,13 @@ export class HomePointerTargets {
     while (walker.nextNode()) {
       const textNode = walker.currentNode as Text;
       const parent = textNode.parentElement;
+      // aria-hidden can label visible copy (e.g. 中 / EN); CSS visibility and
+      // sr-only determine whether there is an actual glyph to illuminate.
       if (
         parent &&
-        !parent.closest("svg, [aria-hidden='true'], .sr-only, script, style")
+        !parent.closest("svg, .sr-only, script, style, .home-pointer__glyph") &&
+        parent.checkVisibility({ visibilityProperty: true }) &&
+        textNode.data.trim()
       ) {
         textNodes.push(textNode);
       }
@@ -163,33 +201,121 @@ export class HomePointerTargets {
     glyphIndexes?: ReadonlySet<number>
   ): PointerGlyphDestination[] {
     const glyphs = this.prepare(target);
-    if (glyphs.length === 0) {
-      const rect = target.getBoundingClientRect();
-      return [
-        {
-          glyph: null,
-          glyphIndex: 0,
-          point: {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
+    const destinations: PointerGlyphDestination[] = glyphs.flatMap(
+      (glyph, glyphIndex) => {
+        if (glyphIndexes && !glyphIndexes.has(glyphIndex)) return [];
+        const rect = glyph.getBoundingClientRect();
+        return [
+          {
+            glyph,
+            glyphIndex,
+            point: {
+              x: rect.left + rect.width / 2,
+              y: rect.top + rect.height / 2,
+            },
           },
-        },
-      ];
+        ];
+      }
+    );
+
+    let glyphIndex = glyphs.length;
+    target.querySelectorAll<SVGSVGElement>("svg").forEach(svg => {
+      const result = this.svgDestinations(svg, glyphIndex);
+      result.destinations.forEach(destination => {
+        if (!glyphIndexes || glyphIndexes.has(destination.glyphIndex)) {
+          destinations.push(destination);
+        }
+      });
+      glyphIndex += result.sampleCount;
+    });
+    return destinations;
+  }
+
+  private isVisibleDrawablePath(path: SVGPathElement): boolean {
+    if (!path.checkVisibility({ visibilityProperty: true })) return false;
+    const style = getComputedStyle(path);
+    return style.stroke !== "none" || style.fill !== "none";
+  }
+
+  private svgDestinations(
+    svg: SVGSVGElement,
+    firstGlyphIndex: number
+  ): { destinations: PointerGlyphDestination[]; sampleCount: number } {
+    if (!svg.checkVisibility({ visibilityProperty: true })) {
+      return { destinations: [], sampleCount: 0 };
     }
 
-    return glyphs.flatMap((glyph, glyphIndex) => {
-      if (glyphIndexes && !glyphIndexes.has(glyphIndex)) return [];
-      const rect = glyph.getBoundingClientRect();
-      return [
-        {
-          glyph,
-          glyphIndex,
-          point: {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-          },
-        },
-      ];
+    const paths = Array.from(
+      svg.querySelectorAll<SVGPathElement>("path")
+    ).filter(path => this.isVisibleDrawablePath(path));
+    if (paths.length === 0) return { destinations: [], sampleCount: 0 };
+
+    // Sample local path geometry once; compare node identity as well as data
+    // because a DOM replacement can reuse identical `d` attributes.
+    const signature = paths
+      .map(
+        path => `${path.getAttribute("d")}\u0000${path.getAttribute("stroke")}`
+      )
+      .join("\u0001");
+    let cached = this.svgSamples.get(svg);
+    const pathsMatch =
+      cached?.paths.length === paths.length &&
+      cached.paths.every((path, index) => path === paths[index]);
+    if (!cached || !pathsMatch || cached.signature !== signature) {
+      const drawablePaths = paths
+        .map(path => ({ path, length: path.getTotalLength() }))
+        .filter(({ length }) => length > 0);
+      const totalLength = drawablePaths.reduce(
+        (length, item) => length + item.length,
+        0
+      );
+      const samples: SVGPathSample[] = [];
+
+      if (totalLength > 0) {
+        const sampleCount = Math.min(
+          8,
+          Math.max(4, Math.ceil(totalLength / 8))
+        );
+        for (let sampleIndex = 0; sampleIndex < sampleCount; sampleIndex += 1) {
+          let remainingLength =
+            ((sampleIndex + 0.5) / sampleCount) * totalLength;
+          let selected = drawablePaths[drawablePaths.length - 1];
+          for (const candidate of drawablePaths) {
+            selected = candidate;
+            if (remainingLength <= candidate.length) break;
+            remainingLength -= candidate.length;
+          }
+          const point = selected.path.getPointAtLength(remainingLength);
+          samples.push({ path: selected.path, x: point.x, y: point.y });
+        }
+      }
+
+      cached = { paths, signature, samples };
+      this.svgSamples.set(svg, cached);
+    }
+
+    // Screen matrices change with layout, so transform cached local points now.
+    const destinations: PointerGlyphDestination[] = [];
+    const screenPoint = svg.createSVGPoint();
+    const matrices = new Map<SVGPathElement, DOMMatrix | null>();
+    cached.samples.forEach((sample, sampleIndex) => {
+      const glyphIndex = firstGlyphIndex + sampleIndex;
+      let matrix = matrices.get(sample.path);
+      if (matrix === undefined) {
+        matrix = sample.path.getScreenCTM();
+        matrices.set(sample.path, matrix);
+      }
+      if (!matrix) return;
+
+      screenPoint.x = sample.x;
+      screenPoint.y = sample.y;
+      const point = screenPoint.matrixTransform(matrix);
+      destinations.push({
+        glyph: null,
+        glyphIndex,
+        point: { x: point.x, y: point.y },
+      });
     });
+    return { destinations, sampleCount: cached.samples.length };
   }
 }

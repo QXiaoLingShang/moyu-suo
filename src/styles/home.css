@@ -43,7 +43,7 @@
 .home-backdrop {
   --home-background-blur: 1.6px;
   position: fixed;
-  z-index: -1;
+  z-index: var(--z-local-behind);
   inset: 0;
   overflow: hidden;
   background-color: #f8fcff;
@@ -61,7 +61,7 @@
 }
 
 .home-backdrop__scene {
-  z-index: 0;
+  z-index: var(--z-local-base);
   inset: -4%;
   background-position: center top;
   background-size: cover;
@@ -87,7 +87,7 @@
 }
 
 .home-backdrop__landscape {
-  z-index: 0;
+  z-index: var(--z-local-base);
   width: 100%;
   height: 100%;
   perspective: 1150px;
@@ -96,7 +96,7 @@
 }
 
 .home-backdrop__halftone {
-  z-index: 1;
+  z-index: var(--z-local-raised);
   inset: -4% auto auto -4%;
   width: 108%;
   height: 108%;
@@ -126,7 +126,7 @@
 }
 
 .home-backdrop__glints {
-  z-index: 3;
+  z-index: var(--z-local-accent);
   top: -4%;
   left: -4%;
   right: auto;
@@ -194,7 +194,7 @@
 
 .home-page {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-local-overlay);
   width: 100%;
   margin-inline: auto;
   padding-inline: 1rem;
@@ -214,7 +214,7 @@
 
 .home-effects-layer {
   position: fixed;
-  z-index: 2147483647;
+  z-index: var(--z-pointer-effects);
   inset: 0;
   pointer-events: none;
 }
@@ -222,14 +222,14 @@
 .home-ripple-layer {
   position: absolute;
   inset: 0;
-  z-index: 4;
+  z-index: var(--z-local-top);
   overflow: hidden;
   pointer-events: none;
 }
 
 .home-ripple {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-local-raised);
   inset: 0;
   width: 100%;
   height: 100%;
@@ -260,7 +260,7 @@
 
 .home-pointer-glow {
   position: absolute;
-  z-index: 0;
+  z-index: var(--z-local-base);
   top: 0;
   left: 0;
   box-sizing: border-box;
@@ -307,7 +307,8 @@
   opacity: 0.96;
 }
 
-.home-pointer-glow[data-state="merged"] {
+.home-pointer-glow[data-state="merged"],
+.home-pointer-glow[data-state="icon"] {
   border-color: transparent;
   background: var(--home-highlight);
   box-shadow:
@@ -334,7 +335,7 @@
 
 .home-pointer {
   position: absolute;
-  z-index: 1;
+  z-index: var(--z-local-raised);
   top: 0;
   left: 0;
   width: 0.4rem;
@@ -386,7 +387,7 @@
 
 .home-pointer-satellite {
   position: absolute;
-  z-index: 2;
+  z-index: var(--z-local-overlay);
   top: 0;
   left: 0;
   width: 3px;
@@ -441,6 +442,15 @@
     0 0 1.5rem color-mix(in srgb, var(--home-highlight) 62%, transparent);
 }
 
+.home-shell [data-home-pointer-phase="merged"] svg,
+.home-shell
+  [data-home-pointer-phase="dispersing"]:has([data-home-pointer-lit])
+  svg {
+  color: var(--home-highlight);
+  stroke: currentColor;
+  filter: drop-shadow(0 0 0.3rem var(--home-highlight-glow));
+}
+
 html[data-home-cursor-active],
 html[data-home-cursor-active] * {
   cursor: none !important;
@@ -448,7 +458,7 @@ html[data-home-cursor-active] * {
 
 .home-disc {
   position: absolute;
-  z-index: 3;
+  z-index: var(--z-local-accent);
   top: calc(var(--home-center-y) - 5rem);
   left: 50%;
   display: block;
@@ -480,7 +490,7 @@ html[data-home-cursor-active] * {
 }
 
 .home-disc::before {
-  z-index: -1;
+  z-index: var(--z-local-behind);
   inset: -0.7rem;
   color: var(--home-moonlight);
   /* Let the avatar keep the only hard rim; this layer reads as light. */
@@ -500,7 +510,7 @@ html[data-home-cursor-active] * {
 }
 
 .home-disc::after {
-  z-index: 2;
+  z-index: var(--z-local-overlay);
   inset: 0.15rem;
   color: var(--home-line-ink);
   background-image: radial-gradient(
@@ -535,7 +545,7 @@ html[data-home-cursor-active] * {
 
 .home-disc img {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-local-raised);
   display: block;
   width: 100%;
   height: 100%;
@@ -571,7 +581,7 @@ html[data-home-cursor-active] * {
 
 .home-connectors {
   position: absolute;
-  z-index: 2;
+  z-index: var(--z-local-overlay);
   inset: 0;
   width: 100%;
   height: 100%;
@@ -662,7 +672,7 @@ html[data-home-cursor-active] * {
 
 .home-entrances ul {
   position: absolute;
-  z-index: 4;
+  z-index: var(--z-local-top);
   inset: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -803,7 +813,7 @@ html[data-home-cursor-active] * {
 
 .home-detail {
   position: absolute;
-  z-index: 4;
+  z-index: var(--z-local-top);
   bottom: 7rem;
   left: 50%;
   width: min(34rem, 90%);
@@ -942,7 +952,7 @@ html[data-home-cursor-active] * {
 
 .home-recent::before {
   position: absolute;
-  z-index: 0;
+  z-index: var(--z-local-base);
   inset-block: -7rem -4rem;
   left: 50%;
   width: 100vw;
@@ -1011,7 +1021,7 @@ html[data-home-cursor-active] * {
 .home-recent__heading,
 .home-recent__list {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-local-raised);
 }
 
 .home-recent__heading > a:focus-visible {
@@ -1130,7 +1140,7 @@ html:not([data-home-cursor-active]) .home-recent__secondary a:hover {
 
 .home-footer {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-local-overlay);
 }
 
 .home-footer > div {
