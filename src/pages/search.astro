@@ -18,10 +18,6 @@ if (config.features.search !== "pagefind" && notFoundUrl) {
   return Astro.rewrite(notFoundUrl);
 }
 
-const backUrl = config.features.showBackButton
-  ? `${Astro.url.pathname}`
-  : getRelativeLocaleUrl(locale, "");
-
 const pagefindBundlePath = getAssetPath("pagefind/");
 
 const t = useTranslations(locale);
@@ -44,7 +40,6 @@ const t = useTranslations(locale);
     <div
       id="pagefind-search"
       transition:persist
-      data-backurl={backUrl}
       data-bundle-path={pagefindBundlePath}
     >
     </div>
@@ -146,13 +141,6 @@ const t = useTranslations(locale);
           processTerm: function (term: string) {
             params.set("q", term); // Update the `q` parameter in the URL
             history.replaceState(history.state, "", "?" + params.toString()); // Push the new URL without reloading
-
-            const backUrl =
-              pageFindSearch?.dataset?.backurl ?? window.location.pathname;
-            sessionStorage.setItem(
-              "backUrl",
-              `${backUrl}?${params.toString()}`
-            );
 
             return term;
           },

@@ -8,3 +8,9 @@
 - `visibility`：`live` 为可访问链接，`planned` 显示但不可跳转，`hidden` 不参与布局。
 
 最多十个可见入口时，宽屏使用同圆端点的环绕布局；再增加入口或进入窄屏后，改用双列索引。这个退化规则保证标题和点击区域不被挤到头像上。`archives` 入口还受现有 `features.showArchives` 配置控制。
+
+## 站点与 Blog 导航
+
+`siteNavigation.ts` 定义全站栏目与 Blog 子栏目。首页是入口，Blog 是内容父级，标签、搜索和归档属于 Blog；About 保持独立栏目。公开 URL 不因内容层级改变。
+
+Header、Blog 的可见入口和面包屑复用这份栏目数据。子栏目按归档、搜索配置决定是否显示；内容名称由路由提供，不能用 URL slug 覆盖标签原名。访问来源与位置恢复另由[导航历史模块](../scripts/navigation.md)管理。

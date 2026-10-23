@@ -1,116 +1,105 @@
 ---
 import { getRelativeLocaleUrl } from "astro:i18n";
 import { stripBase, stripLocale } from "@/utils/withBase";
+import {
+  BLOG_ROUTE_ROOT,
+  blogNavigation,
+  globalNavigation,
+} from "@/data/siteNavigation";
 import { useTranslations } from "@/i18n";
 import config from "@/config";
 
+type Props = { tagName?: string };
+const { tagName } = Astro.props;
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
+const segments = stripLocale(stripBase(Astro.url.pathname), locale)
+  .split("/")
+  .filter(Boolean);
+const [root, detail, page] = segments;
+const section = [...globalNavigation, ...blogNavigation].find(
+  item => item.route === root
+);
 
-// Strip base prefix and trailing slash, then locale prefix so segments
-// reflect the logical page path only.
-const pathWithoutBase = stripBase(Astro.url.pathname).replace(/\/+$/, "");
-const currentUrlPath = stripLocale(pathWithoutBase, locale);
-
-// Get url array from path
-// eg: /tags/tailwindcss => ['tags', 'tailwindcss']
-const breadcrumbList = currentUrlPath.split("/").slice(1).filter(Boolean);
-
-const decodeSegment = (value: string) => {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-};
-
-const navKeys: Record<string, keyof typeof t.nav> = {
-  posts: "posts",
-  tags: "tags",
-  about: "about",
-  archives: "archives",
-  search: "search",
-};
-
-type BreadcrumbItem = {
-  label: string;
-  key?: string;
-  path: string;
-  page?: string;
-};
-
-// Only route labels own UI keys; a tag named "posts" is still content.
-const breadcrumbs: BreadcrumbItem[] = breadcrumbList.map((segment, index) => {
-  const key = index === 0 ? navKeys[segment] : undefined;
-  return {
-    label: key ? t.nav[key] : decodeSegment(segment),
-    key: key && `nav.${key}`,
-    path: segment,
-  };
-});
-
-if (breadcrumbList[0] === "posts") {
-  breadcrumbs[0].page = breadcrumbList[1] || "1";
-  breadcrumbs.splice(1, 1);
+type Item = { label: string; key?: string; route: string; page?: string };
+const breadcrumbs: Item[] = [{ label: t.nav.home, key: "nav.home", route: "" }];
+// Content hierarchy is independent of the flat public URL paths.
+if (blogNavigation.some(item => item.route === root)) {
+  breadcrumbs.push({
+    label: t.nav.posts,
+    key: "nav.posts",
+    route: BLOG_ROUTE_ROOT,
+  });
 }
-
-if (breadcrumbList[0] === "tags" && !isNaN(Number(breadcrumbList[2]))) {
-  if (Number(breadcrumbList[2]) !== 1) {
-    breadcrumbs[1].page = breadcrumbList[2];
+if (section) {
+  breadcrumbs.push({
+    label: t.nav[section.label],
+    key: `nav.${section.label}`,
+    route: section.route,
+    page:
+      root === BLOG_ROUTE_ROOT && detail && detail !== "1" ? detail : undefined,
+  });
+}
+if (root === "tags" && detail) {
+  let label = tagName ?? detail;
+  if (!tagName) {
+    try {
+      label = decodeURIComponent(detail);
+    } catch {
+      /* Keep a malformed segment readable. */
+    }
   }
-  breadcrumbs.splice(2, 1);
+  breadcrumbs.push({
+    label,
+    route: `tags/${detail}`,
+    page: page && page !== "1" ? page : undefined,
+  });
 }
 ---
 
-<nav class="app-layout mt-8 mb-1" aria-label="breadcrumb">
-  <ul
-    class="flex flex-wrap items-center gap-x-1 font-light [&>li:not(:last-child)>a]:hover:opacity-100"
+<nav
+  class="app-layout mt-8 mb-1"
+  aria-label={t.a11y.breadcrumb}
+  data-i18n-aria-label="a11y.breadcrumb"
+>
+  <ol
+    class="text-muted-foreground flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
   >
-    <li class="flex items-center gap-x-1">
-      <a
-        href={getRelativeLocaleUrl(locale, "")}
-        class="opacity-80"
-        data-i18n="nav.home"
-      >
-        {t.nav.home}
-      </a>
-      <span aria-hidden="true" class="opacity-80">&raquo;</span>
-    </li>
     {
-      breadcrumbs.map((breadcrumb, index) =>
-        index + 1 === breadcrumbs.length ? (
-          <li>
-            <span
-              class:list={["capitalize opacity-75", { lowercase: index > 0 }]}
-              aria-current="page"
+      breadcrumbs.map((item, index) => (
+        <li class="flex items-center gap-x-2">
+          {index > 0 && (
+            <span aria-hidden="true" class="opacity-60">
+              /
+            </span>
+          )}
+          {index < breadcrumbs.length - 1 ? (
+            <a
+              href={getRelativeLocaleUrl(
+                locale,
+                item.route ? `${item.route}/` : ""
+              )}
+              class="hover:text-accent underline-offset-4 hover:underline"
+              data-i18n={item.key}
             >
-              {/* make the last part lowercase in Home > Tags > some-tag */}
-              <span data-i18n={breadcrumb.key}>{breadcrumb.label}</span>
-              {breadcrumb.page && (
+              {item.label}
+            </a>
+          ) : (
+            <span aria-current="page">
+              <span data-i18n={item.key}>{item.label}</span>
+              {item.page && (
                 <>
-                  {" ("}
-                  <span data-i18n="pagination.page" class="lowercase">
-                    {t.pagination.page.toLowerCase()}
-                  </span>
-                  {` ${breadcrumb.page})`}
+                  {" "}
+                  · <span data-i18n="pagination.page">
+                    {t.pagination.page}
+                  </span>{" "}
+                  {item.page}
                 </>
               )}
             </span>
-          </li>
-        ) : (
-          <li class="flex items-center gap-x-1">
-            <a
-              href={getRelativeLocaleUrl(locale, breadcrumb.path)}
-              class="capitalize opacity-70"
-            >
-              <span data-i18n={breadcrumb.key}>{breadcrumb.label}</span>
-            </a>
-            <span aria-hidden="true" class="opacity-70">
-              &raquo;
-            </span>
-          </li>
-        )
-      )
+          )}
+        </li>
+      ))
     }
-  </ul>
+  </ol>
 </nav>

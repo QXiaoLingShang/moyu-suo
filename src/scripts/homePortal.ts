@@ -245,20 +245,6 @@ function initHomePortal(): void {
     },
     { once: true }
   );
-
-  const home = document.querySelector<HTMLElement>(
-    "#main-content[data-layout='index']"
-  );
-  if (!home) return;
-
-  try {
-    sessionStorage.setItem(
-      "backUrl",
-      home.dataset.homePath ?? import.meta.env.BASE_URL
-    );
-  } catch {
-    // Returning to the homepage still works when browser storage is unavailable.
-  }
 }
 
 let pageLoadListenerRegistered = false;

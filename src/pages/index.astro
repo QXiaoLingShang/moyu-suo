@@ -44,7 +44,6 @@ const posts = getSortedPosts(
   await getCollection("posts", ({ data }) => !data.draft)
 ).slice(0, config.posts.perIndex);
 const [featuredPost, ...secondaryPosts] = posts;
-const homePath = getRelativeLocaleUrl(locale, "");
 const postsPath = getRelativeLocaleUrl(locale, "posts");
 const entrances = homeEntrances
   .filter(
@@ -98,12 +97,7 @@ const homeStageStyle = `--home-row-spacing: ${HOME_ROW_SPACING_REM}rem`;
     </div>
     <Header wide />
 
-    <main
-      id="main-content"
-      data-layout="index"
-      data-home-path={homePath}
-      class="home-page"
-    >
+    <main id="main-content" data-layout="index" class="home-page">
       <section
         class="home-stage"
         aria-labelledby="home-title"

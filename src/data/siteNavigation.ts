@@ -11,7 +11,7 @@ export type NavigationLabel = (typeof NAVIGATION_KEYS)[number];
 export type NavigationIcon = NavigationLabel;
 type NavigationId = NavigationLabel | "blog";
 
-const BLOG_ROUTE_ROOT = "posts" as const;
+export const BLOG_ROUTE_ROOT = "posts" as const;
 
 export type NavigationItem = {
   id: NavigationId;

@@ -51,7 +51,7 @@ const tagParams = { tag: tagName };
 >
   <Header />
 
-  <Breadcrumb />
+  <Breadcrumb {tagName} />
 
   <Main
     pageTitle={tplStr(t.pages.tagTitle, tagParams)}
