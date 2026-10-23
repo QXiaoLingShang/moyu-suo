@@ -33,8 +33,4 @@ function initializeArticlePage(): void {
 
 document.addEventListener("astro:before-swap", cleanupArticlePage);
 document.addEventListener("astro:page-load", initializeArticlePage);
-document.addEventListener("astro:after-swap", () => {
-  window.scrollTo({ left: 0, top: 0, behavior: "instant" });
-});
-
 initializeArticlePage();

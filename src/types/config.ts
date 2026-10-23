@@ -22,7 +22,7 @@ interface SiteConfig {
 }
 
 interface PostsConfig {
-  /** Posts per page on paginated listing pages */
+  /** Posts per page on paginated listing pages. Defaults to 8. */
   perPage?: number;
   /** Posts shown on the index/home page */
   perIndex?: number;

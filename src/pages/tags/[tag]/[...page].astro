@@ -10,6 +10,7 @@ import Footer from "@/components/Footer.astro";
 import Pagination from "@/components/Pagination.astro";
 import { getUniqueTags } from "@/utils/getUniqueTags";
 import { getSortedPosts } from "@/utils/getSortedPosts";
+import { withLegacyPaginationUrls } from "@/utils/pagination";
 import { slugifyAll } from "@/utils/slugify";
 import { tplStr, useTranslations } from "@/i18n";
 import config from "@/config";
@@ -24,15 +25,19 @@ export async function getStaticPaths({ paginate }: GetStaticPathsOptions) {
       { includeTestPosts: true }
     );
 
-    return paginate(tagPosts, {
+    const options = {
       params: { tag },
       props: { tagName },
-      pageSize: config.posts.perPage,
+    };
+    return withLegacyPaginationUrls({
+      pages: paginate(tagPosts, { ...options, pageSize: config.posts.perPage }),
+      legacyPages: paginate(tagPosts, { ...options, pageSize: 4 }),
     });
   });
 }
 
-const { page, tagName } = Astro.props;
+const { page, tagName, redirectTo } = Astro.props;
+if (redirectTo) return Astro.redirect(redirectTo, 301);
 
 const locale = Astro.currentLocale ?? config.site.lang;
 const t = useTranslations(locale);
@@ -50,14 +55,11 @@ const tagParams = { tag: tagName };
 
   <Main
     pageTitle={tplStr(t.pages.tagTitle, tagParams)}
-    pageDesc={tplStr(t.pages.tagDesc, tagParams)}
     pageTitleKey="pages.tagTitle"
     pageTitleParams={tagParams}
-    pageDescKey="pages.tagDesc"
-    pageDescParams={tagParams}
   >
     <ul>
-      {page.data.map(data => <Card {...data} />)}
+      {page.data.map(data => <Card {...data} transitionTitle={false} />)}
     </ul>
   </Main>
 

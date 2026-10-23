@@ -10,9 +10,16 @@ import Tag from "./Tag.astro";
 
 type Props = {
   variant?: "h2" | "h3";
+  transitionTitle?: boolean;
 } & CollectionEntry<"posts">;
 
-const { variant: Heading = "h2", id, data, filePath } = Astro.props;
+const {
+  variant: Heading = "h2",
+  transitionTitle = true,
+  id,
+  data,
+  filePath,
+} = Astro.props;
 
 const { title, description, tags, ...props } = data;
 const t = useTranslations(Astro.currentLocale ?? config.site.lang);
@@ -22,16 +29,20 @@ const t = useTranslations(Astro.currentLocale ?? config.site.lang);
   <a
     href={getPostUrl(id, filePath, Astro.currentLocale)}
     class:list={[
-      "text-accent inline-block text-lg font-medium",
+      "text-accent inline-block max-w-full text-lg font-medium wrap-anywhere",
       "decoration-dashed underline-offset-4 hover:underline",
       "focus-visible:no-underline focus-visible:underline-offset-0",
     ]}
   >
-    <Heading transition:name={toTransitionName(id)}>
-      {title}
-    </Heading>
+    {
+      transitionTitle ? (
+        <Heading transition:name={toTransitionName(id)}>{title}</Heading>
+      ) : (
+        <Heading>{title}</Heading>
+      )
+    }
   </a>
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+  <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
     <Datetime {...props} />
     {
       tags.length > 0 && (
@@ -51,5 +62,5 @@ const t = useTranslations(Astro.currentLocale ?? config.site.lang);
       )
     }
   </div>
-  <p>{description}</p>
+  <p class="mt-2 leading-relaxed wrap-anywhere">{description}</p>
 </li>

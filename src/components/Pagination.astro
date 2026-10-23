@@ -4,44 +4,242 @@ import type { CollectionEntry } from "astro:content";
 import IconArrowLeft from "@/assets/icons/IconArrowLeft.svg";
 import IconArrowRight from "@/assets/icons/IconArrowRight.svg";
 import LinkButton from "./LinkButton.astro";
-import { useTranslations } from "@/i18n";
+import { tplStr, useTranslations } from "@/i18n";
+import config from "@/config";
+import { getPaginationHref } from "@/utils/pagination";
 
-type Props = {
-  page: Page<CollectionEntry<"posts">>;
-};
-
+type Props = { page: Page<CollectionEntry<"posts">> };
 const { page } = Astro.props;
-
-const t = useTranslations(Astro.currentLocale);
+const t = useTranslations(Astro.currentLocale ?? config.site.lang);
+const firstPageUrl = page.url.first ?? page.url.current;
+const currentParams = { page: page.currentPage, total: page.lastPage };
+const previousUrl = page.url.prev
+  ? getPaginationHref({ firstPageUrl, page: page.currentPage - 1 })
+  : undefined;
+const nextUrl = page.url.next
+  ? getPaginationHref({ firstPageUrl, page: page.currentPage + 1 })
+  : undefined;
 ---
 
 {
   page.lastPage > 1 && (
     <nav
-      class="mt-auto mb-8 flex justify-center gap-4"
-      role="navigation"
+      id="pagination"
+      class="pagination app-layout"
       aria-label={t.a11y.paginationNav}
-      data-i18n-title="a11y.paginationNav"
+      data-i18n-aria-label="a11y.paginationNav"
     >
       <LinkButton
         disabled={!page.url.prev}
-        href={page.url.prev as string}
-        class:list={["select-none", { "opacity-50": !page.url.prev }]}
+        href={previousUrl && `${previousUrl}#pagination`}
+        rel={page.url.prev && "prev"}
+        role={!page.url.prev ? "link" : undefined}
+        class="pagination-arrow"
         aria-label={t.a11y.goToPreviousPage}
+        title={t.a11y.goToPreviousPage}
+        data-i18n-title="a11y.goToPreviousPage"
       >
-        <IconArrowLeft class="inline-block rtl:rotate-180" />
-        {t.pagination.prev}
+        <IconArrowLeft aria-hidden="true" class="size-5 rtl:rotate-180" />
       </LinkButton>
-      {page.currentPage} / {page.lastPage}
+      <pagination-picker>
+        <details class="pagination-picker">
+          <summary class="pagination-trigger">
+            <span class="pagination-count" aria-hidden="true">
+              <strong>{page.currentPage}</strong>
+              <span class="pagination-separator">/</span>
+              {page.lastPage}
+            </span>
+            <span
+              class="sr-only"
+              data-i18n="pagination.currentPage"
+              data-i18n-params={JSON.stringify(currentParams)}
+            >
+              {tplStr(t.pagination.currentPage, currentParams)}
+            </span>
+          </summary>
+          <div class="pagination-menu">
+            <div class="pagination-reel">
+              {Array.from(
+                { length: page.lastPage },
+                (_, index) => index + 1
+              ).map(number => (
+                <a
+                  class="pagination-option"
+                  href={`${getPaginationHref({ firstPageUrl, page: number })}#pagination`}
+                  aria-current={
+                    number === page.currentPage ? "page" : undefined
+                  }
+                >
+                  <span aria-hidden="true">{number}</span>
+                  <span
+                    class="sr-only"
+                    data-i18n="pagination.pageLabel"
+                    data-i18n-params={JSON.stringify({ page: number })}
+                  >
+                    {tplStr(t.pagination.pageLabel, { page: number })}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </details>
+      </pagination-picker>
       <LinkButton
         disabled={!page.url.next}
-        href={page.url.next as string}
-        class:list={["select-none", { "opacity-50": !page.url.next }]}
+        href={nextUrl && `${nextUrl}#pagination`}
+        rel={page.url.next && "next"}
+        role={!page.url.next ? "link" : undefined}
+        class="pagination-arrow"
         aria-label={t.a11y.goToNextPage}
+        title={t.a11y.goToNextPage}
+        data-i18n-title="a11y.goToNextPage"
       >
-        {t.pagination.next}
-        <IconArrowRight class="inline-block rtl:rotate-180" />
+        <IconArrowRight aria-hidden="true" class="size-5 rtl:rotate-180" />
       </LinkButton>
     </nav>
   )
 }
+
+<script>
+  import "@/scripts/pagination";
+</script>
+
+<style>
+  :global(html:has(#pagination:target)) {
+    scroll-behavior: auto;
+  }
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-block: auto 2rem;
+    padding-block-start: 1rem;
+  }
+  .pagination :global(.pagination-arrow),
+  .pagination-trigger,
+  .pagination-option {
+    display: inline-flex;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    font-variant-numeric: tabular-nums;
+  }
+  .pagination :global(.pagination-arrow[aria-disabled="true"]) {
+    opacity: 0.35;
+  }
+  .pagination :global(a.pagination-arrow:hover),
+  .pagination-trigger:hover,
+  .pagination-option:hover {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+  .pagination-picker {
+    position: relative;
+  }
+  .pagination-trigger {
+    padding-inline: 0.75rem;
+    list-style: none;
+    cursor: pointer;
+  }
+  .pagination-trigger::-webkit-details-marker {
+    display: none;
+  }
+  .pagination-trigger:focus-visible {
+    outline: 2px dashed var(--accent);
+    outline-offset: 2px;
+  }
+  .pagination-count {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .pagination-count strong {
+    font-weight: 600;
+  }
+  .pagination-separator {
+    color: var(--muted-foreground);
+  }
+  .pagination-menu {
+    position: absolute;
+    z-index: var(--z-popover);
+    inset-block-end: calc(100% + 0.5rem);
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: min(30rem, calc(100vw - 3rem));
+    padding-block: 0.5rem;
+    background: color-mix(in srgb, var(--background) 72%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  .pagination-menu::before,
+  .pagination-menu::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      var(--border) 12%,
+      var(--border) 88%,
+      transparent
+    );
+    pointer-events: none;
+  }
+  .pagination-menu::before {
+    inset-block-start: 0;
+  }
+  .pagination-menu::after {
+    inset-block-end: 0;
+  }
+  .pagination-reel {
+    position: relative;
+    display: flex;
+    gap: 0.375rem;
+    padding-inline: 1.25rem;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 1.25rem,
+      black calc(100% - 1.25rem),
+      transparent
+    );
+    cursor: grab;
+  }
+  .pagination-reel::-webkit-scrollbar {
+    display: none;
+  }
+  .pagination-reel[data-dragging] {
+    scroll-snap-type: none;
+    cursor: grabbing;
+    user-select: none;
+  }
+  .pagination-reel[data-wheeling] {
+    scroll-snap-type: none;
+  }
+  .pagination-reel[data-dragging] .pagination-option {
+    cursor: grabbing;
+  }
+  .pagination-option {
+    flex: 0 0 2.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    aspect-ratio: 1;
+    scroll-snap-align: center;
+    outline-offset: -2px;
+  }
+  .pagination-option[aria-current="page"] {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    font-weight: 600;
+  }
+</style>

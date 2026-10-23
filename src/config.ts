@@ -21,7 +21,7 @@ const config: ResolvedAstroPaperConfig = {
       userConfig.site.googleVerification || PUBLIC_GOOGLE_SITE_VERIFICATION,
   },
   posts: {
-    perPage: userConfig.posts?.perPage ?? 4,
+    perPage: userConfig.posts?.perPage ?? 8,
     perIndex: userConfig.posts?.perIndex ?? 4,
     scheduledPostMargin:
       userConfig.posts?.scheduledPostMargin ?? 15 * 60 * 1000,
