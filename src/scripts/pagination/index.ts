@@ -1,4 +1,4 @@
-import { setupPaginationReel } from "./paginationReel";
+import { setupPaginationReel } from "./reel";
 
 /** Native details/links remain usable without the focus and scrolling enhancement. */
 class PaginationPicker extends HTMLElement {

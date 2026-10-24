@@ -1,7 +1,8 @@
-import { setupHomePointer } from "@/scripts/homePointer";
-import { setupHomeHalftone } from "@/scripts/homeHalftone";
-import { setupHomeRipple } from "@/scripts/homeRipple";
-import { setupHomeWaterGlints } from "@/scripts/homeWaterGlints";
+import { setupHomePortal } from "./homePortal";
+import { setupHomePointer } from "./homePointer";
+import { setupHomeHalftone } from "./homeHalftone";
+import { setupHomeRipple } from "./homeRipple";
+import { setupHomeWaterGlints } from "./homeWaterGlints";
 
 function revealRecentOnScroll(shell: HTMLElement): () => void {
   const targets = Array.from(
@@ -69,9 +70,12 @@ function initHomeAtmosphere(): void {
 
 let pageLoadListenerRegistered = false;
 
-export function setupHomeAtmosphere(): void {
+function setupHomeAtmosphere(): void {
   initHomeAtmosphere();
   if (pageLoadListenerRegistered) return;
   document.addEventListener("astro:page-load", initHomeAtmosphere);
   pageLoadListenerRegistered = true;
 }
+
+setupHomePortal();
+setupHomeAtmosphere();

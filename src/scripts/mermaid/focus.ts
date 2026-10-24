@@ -1,8 +1,8 @@
 import Close from "@/assets/icons/IconX.svg?raw";
 import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
 import { acquirePageScrollLock } from "../pageScrollLock";
-import { createIconControl } from "../post/previewControls";
-import { setupPreviewInteractions } from "../post/previewInteractions";
+import { createIconControl } from "../media-preview/controls";
+import { setupPreviewInteractions } from "../media-preview/interactions";
 import { cloneSvgWithUniqueIds } from "./cloneSvg";
 
 type OpenFocusOptions = {

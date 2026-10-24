@@ -1,10 +1,10 @@
 import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
-import { createMermaidFocus } from "./mermaid/focus";
+import { createMermaidFocus } from "./focus";
 import Code from "@/assets/icons/IconCode.svg?raw";
 import Copy from "@/assets/icons/IconCopy.svg?raw";
 import Chart from "@/assets/icons/IconChartDots3.svg?raw";
 import Maximize from "@/assets/icons/IconMaximize.svg?raw";
-import { createIconControl } from "./post/previewControls";
+import { createIconControl } from "../media-preview/controls";
 
 type Diagram = {
   wrapper: HTMLElement;

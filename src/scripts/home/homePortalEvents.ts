@@ -1,4 +1,4 @@
-import type { HomeEntranceNode } from "@/scripts/homeOrbit";
+import type { HomeEntranceNode } from "@/scripts/home/homeOrbit";
 
 export type PortalDetail =
   { kind: "intro" } | { kind: "entrance"; entrance: HomeEntranceNode } | null;

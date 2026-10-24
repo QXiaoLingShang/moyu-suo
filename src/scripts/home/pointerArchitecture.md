@@ -1,27 +1,27 @@
 # 首页指针动效：架构基准
 
-本文区分三类内容：仓库级原则来自 [`docs/engineering/principles.md`](../../docs/engineering/principles.md) 与 [`docs/engineering/architecture.md`](../../docs/engineering/architecture.md)，`AGENTS.md` 只提供规范入口；实现事实根据当前指针代码和 CSS 整理；局部 review 建议只适用于首页指针动效，不自动成为全仓规则。视觉效果要求仍以 [`TODO.md`](../../docs/TODO.md) 为准；本文不代替浏览器验收。
+本文记录首页指针代码与 CSS 的状态归属和 DOM 契约。仓库级原则见 [`docs/engineering/principles.md`](../../../docs/engineering/principles.md) 与 [`docs/engineering/architecture.md`](../../../docs/engineering/architecture.md)，`AGENTS.md` 只提供规范入口。首页行为与回归入口见 [README](README.md)；本文不代替浏览器验收。
 
 ## 与仓库原则的关系
 
 仓库级相关原则记录在 `docs/engineering/architecture.md`、`frontend.md` 和 `principles.md`：交互脚本与可复用计算分层；复杂功能按职责和状态所有权拆分；高频指针/滚动工作合并并减少布局读写交错；监听器、观察器和动画资源要清理；响应式布局、键盘操作和减少动态效果偏好都要考虑；抽象应解决实际重复或耦合。
 
-下面的文件职责表和 `data-*` 映射是对现有实现的归纳；“后续 review 清单”是把上述原则具体化到本功能的审查建议。它们不是 `AGENTS.md` 里的逐字规则，也不能只凭文档打勾就证明交互行为正确。
+下面的文件职责表和 `data-*` 映射描述当前实现，维护检查点将这些原则具体应用到首页指针。调整状态和 DOM 契约后，仍需真实浏览器验证交互行为。
 
 ## 当前模块职责（源码归纳）
 
-| 模块                                                                   | 当前职责                                                                     | 建议维持的边界                         |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
-| `src/scripts/homePointer.ts`                                           | 创建无障碍树隐藏的装饰层，组合各模块，绑定指针/几何/偏好事件，并返回清理函数 | 不承接动画算法、命中策略和效果状态转换 |
-| `src/scripts/homeAtmosphere.ts`                                        | 负责首页氛围功能的页面初始化，并在 Astro 页面切换前调用各功能的清理函数      | 指针状态与粒子动画                     |
-| `src/scripts/homePointerController.ts`                                 | 接收指针输入，保存指针/光环位置与速度，合并动画帧，响应目标几何和偏好变化    | 决定粒子如何抵达、字形如何点亮         |
-| `src/scripts/homePointerTargeting.ts`                                  | 按“直接命中、保留当前目标的缓冲范围、首页入口几何范围”解析目标               | 写入高亮状态或创建 DOM                 |
-| `src/scripts/homePointerTransitions.ts`                                | 独占效果状态、当前悬停目标和回收目标；驱动接近、散开、合并、回收及粒子回调   | 自行维护指针坐标或逐帧插值             |
-| `src/scripts/homePointerTargets.ts`                                    | 准备目标字形、提供字形目的点和边界几何，并缓存稳定入口的测量结果             | 决定目标状态或控制 CSS 表现            |
-| `src/scripts/homePointerHighlight.ts`                                  | 保存抽样锚点与实际抵达记录，更新目标/字形上的展示属性                        | 推进粒子或拥有整体效果状态             |
-| `src/scripts/homePointerParticles.ts`                                  | 管理粒子 DOM、动画帧、延时器、预算与取消；完成结果区分抵达和预算淘汰         | 直接判定字形已经抵达或点亮             |
-| `src/utils/homePointerGeometry.ts`、`src/utils/homePointerSampling.ts` | 提供可独立使用的几何和抽样计算                                               | 访问页面 DOM 或持有交互状态            |
-| `src/styles/home.css`                                                  | 根据脚本写入的 `data-*` 属性呈现状态                                         | 成为状态机的另一份隐式实现             |
+| 模块                                                                             | 当前职责                                                                     | 建议维持的边界                         |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------- |
+| `src/scripts/home/homePointer.ts`                                                | 创建无障碍树隐藏的装饰层，组合各模块，绑定指针/几何/偏好事件，并返回清理函数 | 不承接动画算法、命中策略和效果状态转换 |
+| `src/scripts/home/index.ts`                                                      | 负责首页氛围功能的页面初始化，并在 Astro 页面切换前调用各功能的清理函数      | 指针状态与粒子动画                     |
+| `src/scripts/home/homePointerController.ts`                                      | 接收指针输入，保存指针/光环位置与速度，合并动画帧，响应目标几何和偏好变化    | 决定粒子如何抵达、字形如何点亮         |
+| `src/scripts/home/homePointerTargeting.ts`                                       | 按“直接命中、保留当前目标的缓冲范围、首页入口几何范围”解析目标               | 写入高亮状态或创建 DOM                 |
+| `src/scripts/home/homePointerTransitions.ts`                                     | 独占效果状态、当前悬停目标和回收目标；驱动接近、散开、合并、回收及粒子回调   | 自行维护指针坐标或逐帧插值             |
+| `src/scripts/home/homePointerTargets.ts`                                         | 准备目标字形、提供字形目的点和边界几何，并缓存稳定入口的测量结果             | 决定目标状态或控制 CSS 表现            |
+| `src/scripts/home/homePointerHighlight.ts`                                       | 保存抽样锚点与实际抵达记录，更新目标/字形上的展示属性                        | 推进粒子或拥有整体效果状态             |
+| `src/scripts/home/homePointerParticles.ts`                                       | 管理粒子 DOM、动画帧、延时器、预算与取消；完成结果区分抵达和预算淘汰         | 直接判定字形已经抵达或点亮             |
+| `src/utils/home/homePointerGeometry.ts`、`src/utils/home/homePointerSampling.ts` | 提供可独立使用的几何和抽样计算                                               | 访问页面 DOM 或持有交互状态            |
+| `src/styles/home.css`                                                            | 根据脚本写入的 `data-*` 属性呈现状态                                         | 成为状态机的另一份隐式实现             |
 
 状态流向如下：
 

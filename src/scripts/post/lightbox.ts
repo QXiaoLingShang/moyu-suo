@@ -1,7 +1,7 @@
 import Close from "@/assets/icons/IconX.svg?raw";
 import { acquirePageScrollLock } from "../pageScrollLock";
-import { setupPreviewInteractions } from "./previewInteractions";
-import { createIconControl } from "./previewControls";
+import { setupPreviewInteractions } from "../media-preview/interactions";
+import { createIconControl } from "../media-preview/controls";
 import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
 import { tplStr } from "@/i18n/format";
 

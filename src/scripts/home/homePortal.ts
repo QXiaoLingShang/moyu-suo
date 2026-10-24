@@ -1,11 +1,11 @@
 import {
   bindPortalEvents,
   type PortalDetail,
-} from "@/scripts/homePortalEvents";
+} from "@/scripts/home/homePortalEvents";
 import {
   createHomeOrbitLayout,
   type HomeEntranceNode,
-} from "@/scripts/homeOrbit";
+} from "@/scripts/home/homeOrbit";
 
 type DetailElements = {
   eyebrow: HTMLElement;

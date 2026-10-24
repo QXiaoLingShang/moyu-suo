@@ -1,6 +1,6 @@
 # Mermaid 阅读交互
 
-入口为 `../mermaid.ts`，聚焦视图由 `focus.ts` 管理，样式位于 `../../styles/mermaid.css`。工程规范入口见 `../../../docs/engineering/README.md`。
+入口为 [index.ts](index.ts)，聚焦视图由 `focus.ts` 管理，共享控件与手势见 [media-preview](../media-preview/README.md)，样式位于 `../../styles/mermaid.css`。工程规范入口见 `../../../docs/engineering/README.md`。
 
 ## 源码、状态与生命周期
 
@@ -35,4 +35,4 @@
 
 真实样例为 `posts/study/OI/CF/Educational-Round-195.md` 的两张红蓝图，不改文章源。复核明暗初始加载、快速切换、图表/源码独立状态、双语及 390px 聚焦。其余场景用仅浏览器响应中注入的临时夹具覆盖：默认图含边标签/箭头/子图、无效语法、普通代码、宽高链图、图片和边注解内图。
 
-验证应覆盖：普通图与固定配色图、聚焦时切主题和保留缩放、加载中关闭的焦点备用路径、图片/注解嵌套、快速离页和剪贴板 Promise 晚完成。共享手势需检查鼠标捕获丢失、滚轮 pixel/line/page 单位与减少动态效果。已完成的代码审查见 [2026-10-24 审查](../../../docs/engineering/reviews/2026-10-24-final-code-review.md)。
+验证应覆盖：普通图与固定配色图、聚焦时切主题和保留缩放、加载中关闭的焦点备用路径、图片/注解嵌套、快速离页和剪贴板 Promise 晚完成。共享手势需检查鼠标捕获丢失、滚轮 pixel/line/page 单位与减少动态效果。

@@ -16,12 +16,12 @@
 
 - 文章格式与发布规则：[posts/_README.md](../../posts/_README.md)
 - 首页入口数据：[src/data/README.md](../../src/data/README.md)
-- 首页指针动效状态和 DOM 契约：[src/scripts/homePointerArchitecture.md](../../src/scripts/homePointerArchitecture.md)
+- 首页指针动效状态和 DOM 契约：[src/scripts/home/README.md](../../src/scripts/home/README.md)
 - 阅读聚焦：[src/scripts/reading-focus/README.md](../../src/scripts/reading-focus/README.md)
 - Mermaid 图表、源码与聚焦：[src/scripts/mermaid/README.md](../../src/scripts/mermaid/README.md)
 - 边注解：[src/scripts/sidenotes/README.md](../../src/scripts/sidenotes/README.md)
 - 图标来源与格式：[src/assets/icons/README.md](../../src/assets/icons/README.md)
 - 导航层级、来源与历史恢复：[src/scripts/navigation.md](../../src/scripts/navigation.md)
-- 文章与标签列表分页：[src/scripts/pagination.md](../../src/scripts/pagination.md)
+- 文章与标签列表分页：[src/scripts/pagination/README.md](../../src/scripts/pagination/README.md)
 
 局部说明补充对应功能，不覆盖仓库级原则。实现、类型和测试是行为依据；文档要随接口或约束的实际变化同步更新。

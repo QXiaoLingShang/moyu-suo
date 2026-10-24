@@ -1,7 +1,7 @@
 import ZoomIn from "@/assets/icons/IconZoomIn.svg?raw";
 import ZoomOut from "@/assets/icons/IconZoomOut.svg?raw";
 import Fit from "@/assets/icons/IconFocusCentered.svg?raw";
-import { createIconControl } from "./previewControls";
+import { createIconControl } from "./controls";
 import { getUIString, UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
 
 /** Shared photo/diagram gestures and zoom dock. Scale 1 is the fitted media size. */

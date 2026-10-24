@@ -1,7 +1,7 @@
 import { prepareSidenoteLayout } from "@/utils/sidenotes/sidenoteLayout";
 import { getSidenoteChoices } from "@/utils/sidenotes/sidenoteSelection";
-import { createSidenoteMotion } from "./sidenotes/motion";
-import { fragmentId, isElementVisible } from "./sidenotes/dom";
+import { createSidenoteMotion } from "./motion";
+import { fragmentId, isElementVisible } from "./dom";
 import {
   collectNotes,
   restoreNotes,
@@ -9,15 +9,15 @@ import {
   referenceKey,
   type NoteReference,
   type NoteGroup,
-} from "./sidenotes/model";
+} from "./model";
 import {
   createPreviewViews,
   setPreviewState,
   type NoteView,
   type PreviewState,
-} from "./sidenotes/views";
-import { createNoteDialog } from "./sidenotes/dialog";
-import { createReadingFocus } from "./sidenotes/reading";
+} from "./views";
+import { createNoteDialog } from "./dialog";
+import { createReadingFocus } from "./reading";
 import { UI_LANGUAGE_CHANGE_EVENT } from "@/i18n/client";
 
 type Selection = NoteReference | null;
