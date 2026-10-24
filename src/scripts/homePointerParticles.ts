@@ -1,5 +1,5 @@
-import type { PointerPoint } from "@/utils/homePointerGeometry";
-import { HOME_POINTER_PARTICLE_BUDGET } from "@/utils/homePointerSampling";
+import type { PointerPoint } from "@/utils/home/homePointerGeometry";
+import { HOME_POINTER_PARTICLE_BUDGET } from "@/utils/home/homePointerSampling";
 
 type TravelOptions = {
   duration: number;

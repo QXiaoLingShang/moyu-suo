@@ -1,11 +1,11 @@
 import {
   intersectsSidenoteRange,
   type SidenoteReadingTarget,
-} from "@/utils/sidenoteGeometry";
+} from "@/utils/sidenotes/sidenoteGeometry";
 import {
   selectSidenoteFocus,
   type SidenoteReadingFrame,
-} from "@/utils/sidenoteSelection";
+} from "@/utils/sidenotes/sidenoteSelection";
 
 /** Resolve input in event order so a later scroll can supersede a manual choice in the same frame. */
 export function createReadingFocus() {

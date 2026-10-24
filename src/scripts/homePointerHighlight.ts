@@ -1,4 +1,4 @@
-import type { SampledPointerParticle } from "@/utils/homePointerSampling";
+import type { SampledPointerParticle } from "@/utils/home/homePointerSampling";
 import type { PointerGlyphDestination } from "./homePointerTargets";
 import { HomePointerTargets } from "./homePointerTargets";
 

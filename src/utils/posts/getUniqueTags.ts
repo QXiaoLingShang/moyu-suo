@@ -1,6 +1,6 @@
 import type { CollectionEntry } from "astro:content";
 import { postFilter } from "./postFilter";
-import { slugifyStr } from "./slugify";
+import { slugifyStr } from "../slugify";
 
 /**
  * Builds a de-duplicated, sorted tag list from posts.

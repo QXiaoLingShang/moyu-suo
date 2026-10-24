@@ -4,7 +4,7 @@ import { fontData, experimental_getFontFileURL } from "astro:assets";
 import satori from "satori";
 import sharp from "sharp";
 import { getFontPathByWeight } from "@/utils/getFontPathByWeight";
-import { getPostSlug } from "@/utils/getPostPaths";
+import { getPostSlug } from "@/utils/posts/getPostPaths";
 import config from "@/config";
 
 export async function getStaticPaths() {

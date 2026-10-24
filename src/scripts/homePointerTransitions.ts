@@ -5,8 +5,8 @@ import type { HomePointerTargets } from "./homePointerTargets";
 import {
   particleTravelDuration,
   samplePointerParticles,
-} from "@/utils/homePointerSampling";
-import type { PointerPoint } from "@/utils/homePointerGeometry";
+} from "@/utils/home/homePointerSampling";
+import type { PointerPoint } from "@/utils/home/homePointerGeometry";
 
 const ARRIVAL_MIN_DURATION_MS = 100;
 const ARRIVAL_MIN_SPEED_PX_PER_MS = 0.42;

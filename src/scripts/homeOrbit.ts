@@ -1,4 +1,7 @@
-import { getHomeGeometry, MAX_ORBIT_ENTRANCES } from "@/utils/homeGeometry";
+import {
+  getHomeGeometry,
+  MAX_ORBIT_ENTRANCES,
+} from "@/utils/home/homeGeometry";
 
 export type HomeEntranceNode = {
   item: HTMLLIElement;

@@ -1,6 +1,6 @@
 import type { CollectionEntry } from "astro:content";
 import config from "@/config";
-import { slugifyStr } from "./slugify";
+import { slugifyStr } from "../slugify";
 
 export type PostFilterOptions = {
   /** Include posts tagged `test` in this selection. */

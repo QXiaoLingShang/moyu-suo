@@ -7,7 +7,7 @@ import {
   viewportCoordinateToGridIndex,
   type RippleWaveBounds,
   type RippleWaveField,
-} from "../utils/homeRippleWave";
+} from "../utils/home/homeRippleWave";
 import { getBackgroundImageUrl, loadDecodedImage } from "./homeImage";
 
 const RIPPLE = {

@@ -1,4 +1,4 @@
-import { getSidenoteChoices } from "@/utils/sidenoteSelection";
+import { getSidenoteChoices } from "@/utils/sidenotes/sidenoteSelection";
 import { createSidenoteExcerpt } from "./excerpt";
 import {
   noteLabel,

@@ -6,7 +6,7 @@ import {
   expandBounds,
   type PointerBounds,
   type PointerPoint,
-} from "@/utils/homePointerGeometry";
+} from "@/utils/home/homePointerGeometry";
 
 export type PointerGlyphDestination = {
   glyph: HTMLElement | null;

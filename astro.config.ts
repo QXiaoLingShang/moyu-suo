@@ -13,15 +13,15 @@ import remarkCollapse from "remark-collapse";
 import remarkMath from "remark-math";
 import remarkGemoji from "remark-gemoji";
 import rehypeCallouts from "rehype-callouts";
-import rehypeFootnoteBrackets from "./src/utils/rehypeFootnoteBrackets";
+import rehypeFootnoteBrackets from "./src/utils/markdown/rehypeFootnoteBrackets";
 import rehypeKatex from "rehype-katex";
-import remarkDisplayMath from "./src/utils/remarkDisplayMath";
+import remarkDisplayMath from "./src/utils/markdown/remarkDisplayMath";
 import {
   transformerNotationDiff,
   transformerNotationHighlight,
   transformerNotationWordHighlight,
 } from "@shikijs/transformers";
-import { transformerFileName } from "./src/utils/transformers/fileName";
+import { transformerFileName } from "./src/utils/markdown/transformerFileName";
 import config from "./astro-paper.config";
 
 export default defineConfig({

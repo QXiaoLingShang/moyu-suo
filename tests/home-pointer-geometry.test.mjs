@@ -5,11 +5,11 @@ import {
   closestBoundaryPoint,
   containsPoint,
   expandBounds,
-} from "../src/utils/homePointerGeometry.ts";
+} from "../src/utils/home/homePointerGeometry.ts";
 import {
   particleTravelDuration,
   samplePointerParticles,
-} from "../src/utils/homePointerSampling.ts";
+} from "../src/utils/home/homePointerSampling.ts";
 
 test("expanded hover bounds include a forgiving margin without moving the label", () => {
   const textBounds = { left: 100, top: 80, right: 160, bottom: 104 };

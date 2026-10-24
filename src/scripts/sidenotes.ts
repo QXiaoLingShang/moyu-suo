@@ -1,5 +1,5 @@
-import { prepareSidenoteLayout } from "@/utils/sidenoteLayout";
-import { getSidenoteChoices } from "@/utils/sidenoteSelection";
+import { prepareSidenoteLayout } from "@/utils/sidenotes/sidenoteLayout";
+import { getSidenoteChoices } from "@/utils/sidenotes/sidenoteSelection";
 import { createSidenoteMotion } from "./sidenotes/motion";
 import { fragmentId, isElementVisible } from "./sidenotes/dom";
 import {

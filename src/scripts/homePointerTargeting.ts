@@ -1,4 +1,7 @@
-import { containsPoint, type PointerPoint } from "@/utils/homePointerGeometry";
+import {
+  containsPoint,
+  type PointerPoint,
+} from "@/utils/home/homePointerGeometry";
 import type { HomePointerTargets } from "./homePointerTargets";
 
 const INTERACTIVE_TARGETS =

@@ -3,8 +3,8 @@ import test from "node:test";
 import {
   getSidenoteChoices,
   selectSidenoteFocus,
-} from "../src/utils/sidenoteSelection.ts";
-import { calculateSidenoteLayout } from "../src/utils/sidenoteLayout.ts";
+} from "../src/utils/sidenotes/sidenoteSelection.ts";
+import { calculateSidenoteLayout } from "../src/utils/sidenotes/sidenoteLayout.ts";
 
 test("nearby repeated references share one choice and remember the exact active reference", () => {
   const first = { note: "A", ref: "a-1" };

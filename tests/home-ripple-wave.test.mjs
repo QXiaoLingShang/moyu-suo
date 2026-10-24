@@ -7,7 +7,7 @@ import {
   expandRippleWaveBounds,
   stepRippleWaveField,
   viewportCoordinateToGridIndex,
-} from "../src/utils/homeRippleWave.ts";
+} from "../src/utils/home/homeRippleWave.ts";
 
 test("viewport coordinates map to the matching bounded ripple cells", () => {
   assert.equal(viewportCoordinateToGridIndex(0, 120, 20), 0);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getHomeGeometry } from "../src/utils/homeGeometry.ts";
+import { getHomeGeometry } from "../src/utils/home/homeGeometry.ts";
 
 function getAngularGaps(points, center) {
   const angles = points

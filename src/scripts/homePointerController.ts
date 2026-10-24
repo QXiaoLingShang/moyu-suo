@@ -3,7 +3,7 @@ import type { HomePointerHighlight } from "./homePointerHighlight";
 import type { HomePointerTargets } from "./homePointerTargets";
 import { resolveHomePointerTarget } from "./homePointerTargeting";
 import { createHomePointerTransitions } from "./homePointerTransitions";
-import type { PointerPoint } from "@/utils/homePointerGeometry";
+import type { PointerPoint } from "@/utils/home/homePointerGeometry";
 
 const FOLLOW_TIME_MS = 70;
 const APPROACH_DURATION_MS = 120;
