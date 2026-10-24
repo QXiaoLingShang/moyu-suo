@@ -24,7 +24,13 @@
     }
 
     .katex-display {
-      @apply text-foreground;
+      @apply text-foreground overflow-x-auto overflow-y-hidden;
+    }
+
+    .katex-display > .katex {
+      /* Let long equations scroll from their first symbol, without clipping
+         the left half of KaTeX's centered inline content. */
+      min-width: max-content;
     }
 
     a {
