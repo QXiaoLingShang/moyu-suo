@@ -72,6 +72,8 @@ moyu-suo/
 └── .github/workflows/      GitHub Pages 自动部署流程
 ```
 
+实现入口、功能分工及源码旁的局部说明见 [src/README.md](src/README.md)；全仓规范见 [docs/engineering/](docs/engineering/README.md)。
+
 ## 致谢
 
 本站使用 [AstroPaper](https://github.com/satnaing/astro-paper) 作为主题基础。感谢 [Sat Naing](https://github.com/satnaing) 开源这个主题。文章插图使用 [Excalidraw](https://excalidraw.com/) 绘制，并通过[官方 CLI](https://github.com/excalidraw/cli)导出，感谢 Excalidraw 社区。

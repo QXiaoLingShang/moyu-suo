@@ -55,3 +55,14 @@ output/playwright/
 /posts/tmp.pdf
 /public/assets/home/lake-day-v2.webp
 /public/assets/home/lake-night.webp
+
+# Keep transient review notes out of commits and published artifacts.
+/docs/engineering/reviews/
+/docs/reviews/
+/review/
+/reviews/
+/reviewer/
+/reviewers/
+/reviewer*.md
+/review-*.md
+/.tmp-*
