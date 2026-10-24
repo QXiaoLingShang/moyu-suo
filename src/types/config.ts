@@ -61,7 +61,7 @@ interface FeaturesConfig {
   dynamicOgImage?: boolean;
   /** Show the /archives page and link it in nav. Defaults to true. */
   showArchives?: boolean;
-  /** Show back button on post detail pages. Defaults to true. */
+  /** Enable source-aware article Back; otherwise keep the All posts link. Defaults to true. */
   showBackButton?: boolean;
   /** Show note previews in the left margin when space permits. Defaults to true. */
   showSidenotes?: boolean;

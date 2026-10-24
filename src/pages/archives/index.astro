@@ -3,7 +3,7 @@ import { getRelativeLocaleUrl } from "astro:i18n";
 import { getCollection } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
-import Breadcrumb from "@/components/Breadcrumb.astro";
+import PageNavigation from "@/components/PageNavigation.astro";
 import Main from "@/components/Main.astro";
 import Footer from "@/components/Footer.astro";
 import Card from "@/components/Card.astro";
@@ -33,14 +33,9 @@ const monthFormatter = new Intl.DateTimeFormat(locale, { month: "long" });
 >
   <Header />
 
-  <Breadcrumb />
+  <PageNavigation />
 
-  <Main
-    pageTitle={t.pages.archivesTitle}
-    pageDesc={t.pages.archivesDesc}
-    pageTitleKey="pages.archivesTitle"
-    pageDescKey="pages.archivesDesc"
-  >
+  <Main pageTitle={t.pages.archivesTitle} pageTitleKey="pages.archivesTitle">
     {
       Object.entries(
         getPostsByGroupCondition(filteredPosts, post =>

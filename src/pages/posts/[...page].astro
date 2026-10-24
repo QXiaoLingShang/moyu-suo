@@ -3,6 +3,7 @@ import type { GetStaticPaths } from "astro";
 import { getCollection } from "astro:content";
 import Layout from "@/layouts/Layout.astro";
 import Header from "@/components/Header.astro";
+import PageNavigation from "@/components/PageNavigation.astro";
 import Main from "@/components/Main.astro";
 import Card from "@/components/Card.astro";
 import Footer from "@/components/Footer.astro";
@@ -34,14 +35,14 @@ const t = useTranslations(locale);
   titleKey="pages.postsTitle"
 >
   <Header />
+  <PageNavigation />
 
   <Main
-    class="pt-8"
     pageTitle={t.pages.postsTitle}
     pageTitleKey="pages.postsTitle"
     transitionName="home-posts-heading"
   >
-    <BlogNavigation />
+    <BlogNavigation slot="heading" />
     <ul>
       {page.data.map(data => <Card {...data} transitionTitle={false} />)}
     </ul>

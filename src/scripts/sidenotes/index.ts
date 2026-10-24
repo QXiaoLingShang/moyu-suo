@@ -1,3 +1,4 @@
+import { navigate } from "astro:transitions/client";
 import { prepareSidenoteLayout } from "@/utils/sidenotes/sidenoteLayout";
 import { getSidenoteChoices } from "@/utils/sidenotes/sidenoteSelection";
 import { createSidenoteMotion } from "./motion";
@@ -123,8 +124,9 @@ function enhanceSidenotes(article: HTMLElement): () => void {
   let pendingPointer: PointerSample | null = null;
   let articleHeight = 0,
     previewHeight = 0,
-    rem = 16,
-    navigating = false;
+    rem = 16;
+  let isNavigatingNote = false;
+  let noteNavigationRevision = 0;
 
   const details = createNoteDialog({
     article,
@@ -607,7 +609,7 @@ function enhanceSidenotes(article: HTMLElement): () => void {
       connector.setAttribute("height", String(articleHeight));
       paint();
     }
-    if (wasWide !== wide && !details.isOpen && !navigating) {
+    if (wasWide !== wide && !details.isOpen && !isNavigatingNote) {
       const focusedElement = document.activeElement;
       const selection = selectionFrom(focusedElement);
       if (selection && focusedElement && sidebar.contains(focusedElement)) {
@@ -636,55 +638,97 @@ function enhanceSidenotes(article: HTMLElement): () => void {
     )
       if (parent instanceof HTMLDetailsElement) parent.open = true;
   }
-  function navigate(
-    target: HTMLElement,
-    selection: Selection,
-    updateHash: boolean
-  ) {
-    navigating = true;
-    if (details.isOpen) details.close({ restoreFocus: false });
-    reveal(target);
-    if (bySource.has(target)) {
-      const note = bySource.get(target)!;
-      const ref =
-        selection?.ref ?? note.refs.find(isElementVisible) ?? note.refs[0];
-      if (ref) reveal(ref);
-      remember({ note, ref });
-    } else remember(selection);
-    layout();
-    const referenceId = bySource.has(target)
-      ? (selected?.ref?.id ?? null)
-      : null;
-    if (
-      updateHash &&
-      (fragmentId(location.hash) !== target.id ||
-        history.state?.sidenoteReference !== referenceId)
-    )
-      history.pushState(
-        { ...history.state, sidenoteReference: referenceId },
-        "",
-        `#${encodeURIComponent(target.id)}`
-      );
-    if ((wide || !showEndnotes) && bySource.has(target)) {
-      // A direct footnote URL can initially land on the visible endnote list.
-      // Restore its reading context before opening details (also for history).
-      if (!updateHash && selected?.ref) {
-        const bounds = selected.ref.getBoundingClientRect();
-        if (bounds.bottom <= 0 || bounds.top >= innerHeight)
-          selected.ref.scrollIntoView({ block: "center", behavior: "instant" });
-      }
-      openDetail(
-        { note: bySource.get(target)!, ref: selected?.ref },
-        selected?.ref
-      );
-    } else {
-      target.focus({ preventScroll: true });
-      target.scrollIntoView({
-        block: "center",
-        behavior: reducedMotion.matches ? "instant" : "smooth",
-      });
+  function updateNoteHistory({
+    targetId,
+    referenceId,
+  }: {
+    targetId: string;
+    referenceId: string | null;
+  }): Promise<void> | undefined {
+    const state = { ...history.state, sidenoteReference: referenceId };
+    if (fragmentId(location.hash) === targetId) {
+      // Selecting another occurrence at the same URL updates the current
+      // entry; only Astro creates new entries and owns their indices.
+      if (history.state?.sidenoteReference !== referenceId)
+        history.replaceState(state, "");
+      return;
     }
-    navigating = false;
+    const root = document.documentElement;
+    const scrollBehavior = root.style.scrollBehavior;
+    // The router also scrolls to its fragment. Keep that scroll instant
+    // so it cannot continue behind the dialog after we restore context.
+    root.style.scrollBehavior = "auto";
+    return navigate(`#${encodeURIComponent(targetId)}`, { state }).finally(
+      () => {
+        root.style.scrollBehavior = scrollBehavior;
+      }
+    );
+  }
+  async function navigateToNote({
+    target,
+    selection,
+    updateHash,
+  }: {
+    target: HTMLElement;
+    selection: Selection;
+    updateHash: boolean;
+  }) {
+    const revision = ++noteNavigationRevision;
+    isNavigatingNote = true;
+    try {
+      if (details.isOpen) details.close({ restoreFocus: false });
+      reveal(target);
+      const note = bySource.get(target);
+      // Reading focus may change selection during layout or navigation; keep
+      // this action's occurrence stable for both history and the dialog.
+      const ref = note
+        ? (selection?.ref ?? note.refs.find(isElementVisible) ?? note.refs[0])
+        : undefined;
+      if (note) {
+        if (ref) reveal(ref);
+        remember({ note, ref });
+      } else remember(selection);
+      layout();
+      if (updateHash) {
+        const position = { left: scrollX, top: scrollY };
+        const navigation = updateNoteHistory({
+          targetId: target.id,
+          referenceId: ref?.id ?? null,
+        });
+        if (navigation) {
+          await navigation;
+          if (
+            signal.aborted ||
+            revision !== noteNavigationRevision ||
+            !target.isConnected
+          )
+            return;
+          if ((wide || !showEndnotes) && note)
+            window.scrollTo({ ...position, behavior: "instant" });
+        }
+      }
+      if ((wide || !showEndnotes) && note) {
+        // A direct footnote URL can initially land on the visible endnote list.
+        // Restore its reading context before opening details (also for history).
+        if (!updateHash && ref) {
+          const bounds = ref.getBoundingClientRect();
+          if (bounds.bottom <= 0 || bounds.top >= innerHeight)
+            ref.scrollIntoView({
+              block: "center",
+              behavior: "instant",
+            });
+        }
+        openDetail({ note, ref }, ref);
+      } else {
+        target.focus({ preventScroll: true });
+        target.scrollIntoView({
+          block: "center",
+          behavior: reducedMotion.matches ? "instant" : "smooth",
+        });
+      }
+    } finally {
+      if (revision === noteNavigationRevision) isNavigatingNote = false;
+    }
   }
   function fromHash() {
     const target = document.getElementById(fragmentId(location.hash));
@@ -704,12 +748,12 @@ function enhanceSidenotes(article: HTMLElement): () => void {
           : (selection.note.refs.find(isElementVisible) ??
             selection.note.refs[0]);
     }
-    if (selection) navigate(target, selection, false);
+    if (selection)
+      void navigateToNote({ target, selection, updateHash: false });
     else if (details.isOpen) details.close();
   }
   function scheduleFromHash() {
-    // A history entry may change only the occurrence, retaining the same hash.
-    // Coalesce popstate/hashchange so one history change does not navigate twice.
+    // Coalesce popstate/hashchange so one traversal does not navigate twice.
     if (!historyFrame)
       historyFrame = requestAnimationFrame(() => {
         historyFrame = 0;
@@ -786,11 +830,13 @@ function enhanceSidenotes(article: HTMLElement): () => void {
       const target = document.getElementById(fragmentId(link.hash));
       if (!target || !article.contains(target)) return;
       event.preventDefault();
-      navigate(
+      void navigateToNote({
         target,
-        byRef.has(link) ? selectionFrom(link) : selectionFrom(target),
-        true
-      );
+        selection: byRef.has(link)
+          ? selectionFrom(link)
+          : selectionFrom(target),
+        updateHash: true,
+      });
     },
     { signal }
   );

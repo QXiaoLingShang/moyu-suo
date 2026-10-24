@@ -30,6 +30,10 @@ function createTagPage(tag) {
   });
   const breadcrumbLabel = textElement("标签", { "data-i18n": "nav.tags" });
   const breadcrumbTag = textElement(tag);
+  const returnLabel = textElement(`返回“${tag}”`, {
+    "data-i18n": "navigation.backToTag",
+    "data-i18n-params": params,
+  });
   const seconds = textElement("秒", { "data-i18n": "readingFocus.seconds" });
   const elements = [
     title,
@@ -37,6 +41,7 @@ function createTagPage(tag) {
     description,
     breadcrumbLabel,
     breadcrumbTag,
+    returnLabel,
     seconds,
   ];
   const document = new EventTarget();
@@ -63,6 +68,7 @@ function createTagPage(tag) {
     description,
     breadcrumbLabel,
     breadcrumbTag,
+    returnLabel,
     seconds,
   };
 }
@@ -102,6 +108,10 @@ function assertTagPage(page, tag, language) {
   );
   assert.equal(page.document.title, heading + siteSuffix);
   assert.equal(page.breadcrumbTag.textContent, tag);
+  assert.equal(
+    page.returnLabel.textContent,
+    english ? `Back to ${tag}` : `返回“${tag}”`
+  );
   assert.equal(page.breadcrumbLabel.textContent, english ? "Tags" : "标签");
   assert.equal(page.seconds.textContent, english ? "s" : "秒");
   assert.equal(page.document.documentElement.lang, language);

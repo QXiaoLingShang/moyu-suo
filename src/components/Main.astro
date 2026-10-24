@@ -22,32 +22,35 @@ const {
 } = Astro.props;
 
 const titleAttributes = {
-  class: "text-2xl font-semibold sm:text-3xl",
+  class: "text-2xl font-semibold wrap-anywhere sm:text-3xl",
   "data-i18n": pageTitleKey || undefined,
   "data-i18n-params": pageTitleParams && JSON.stringify(pageTitleParams),
 };
 ---
 
 <main id="main-content" class:list={["app-layout pb-4", className]}>
-  {
-    transitionName ? (
-      <h1 {...titleAttributes} transition:name={transitionName}>
-        {pageTitle}
-      </h1>
-    ) : (
-      <h1 {...titleAttributes}>{pageTitle}</h1>
-    )
-  }
-  {
-    pageDesc && (
-      <p
-        class="mt-2 mb-6"
-        data-i18n={pageDescKey || undefined}
-        data-i18n-params={pageDescParams && JSON.stringify(pageDescParams)}
-      >
-        {pageDesc}
-      </p>
-    )
-  }
+  <header class="mb-6">
+    {
+      transitionName ? (
+        <h1 {...titleAttributes} transition:name={transitionName}>
+          {pageTitle}
+        </h1>
+      ) : (
+        <h1 {...titleAttributes}>{pageTitle}</h1>
+      )
+    }
+    {
+      pageDesc && (
+        <p
+          class="mt-2"
+          data-i18n={pageDescKey || undefined}
+          data-i18n-params={pageDescParams && JSON.stringify(pageDescParams)}
+        >
+          {pageDesc}
+        </p>
+      )
+    }
+    <slot name="heading" />
+  </header>
   <slot />
 </main>

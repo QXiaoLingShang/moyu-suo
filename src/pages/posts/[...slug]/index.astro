@@ -13,7 +13,7 @@ import { slugifyStr } from "@/utils/slugify";
 import { toTransitionName } from "@/utils/toTransitionName";
 import EditPost from "./_components/EditPost.astro";
 import ShareLinks from "./_components/ShareLinks.astro";
-import BackButton from "./_components/BackButton.astro";
+import PageNavigation from "@/components/PageNavigation.astro";
 import BackToTopButton from "./_components/BackToTopButton.astro";
 import AdjacentPostNav from "./_components/AdjacentPostNav.astro";
 import config from "@/config";
@@ -132,18 +132,18 @@ const ogImage = ogImageUrl
 >
   <Header />
 
-  <BackButton />
+  <PageNavigation article />
 
   <main
     id="main-content"
-    class:list={["app-layout", { "mt-8": !config.features.showBackButton }]}
+    class="app-layout"
     data-pagefind-body={!isTest ? "" : undefined}
     data-pagefind-ignore={isTest ? "" : undefined}
   >
     <h1
       data-reading-focus-title
       style={{ viewTransitionName: toTransitionName(post.id) }}
-      class="text-accent inline-block text-2xl font-bold sm:text-3xl"
+      class="text-accent inline-block text-2xl font-bold wrap-anywhere sm:text-3xl"
     >
       {title}
     </h1>

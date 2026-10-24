@@ -29,6 +29,19 @@ export interface UIStrings {
     local: string;
     utilities: string;
   };
+  navigation: {
+    postsDirectory: string;
+    backToHome: string;
+    backToPosts: string;
+    backToTags: string;
+    backToTag: string;
+    backToTaggedPosts: string;
+    backToArchives: string;
+    backToSearch: string;
+    backToAbout: string;
+    backToArticle: string;
+    backToPage: string;
+  };
   post: {
     publishedAt: string;
     updatedAt: string;
@@ -49,7 +62,6 @@ export interface UIStrings {
     onThisPage: string;
     expandTocSection: string;
     collapseTocSection: string;
-    goBack: string;
     editPage: string;
     previousPost: string;
     nextPost: string;
